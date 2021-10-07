@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "cmd_handle.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,6 +11,7 @@
 
 
 int main(){
-    login();
+    //login();
+    PORT("192 168 44 133 12 34", 1);
     return 0;
 }
