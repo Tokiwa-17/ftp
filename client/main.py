@@ -4,7 +4,7 @@ import sys
 def login():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.131', 1234))
+        s.connect(('192.168.44.133', 1234))
 
     except socket.error as msg:
         print(msg)
@@ -23,6 +23,18 @@ def login():
 
     s.close()
 
+def port():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('192.168.44.133', 1234))
+
+    except socket.error as msg:
+        print(msg)
+        print(sys.exit(1))
+    s.recv(15)
+    print("success!")
 
 if __name__ == '__main__':
-    login()
+    #login()
+    port()
+
