@@ -73,11 +73,25 @@ int strip_crlf(char *sentence, int len)
 
 int recv_from_client(int clnt_sock, int idx) {
     char recv_msg[1000];
+    char command[30];
+    char others[30];
+    char param[30];
     int length = 0;
     length = recv(clnt_sock, recv_msg, 1000, 0);
+    if(length <= 0) return 0;
     printf("LENGTH: %d\n", length);
     recv_msg[length] = '\0';
+    //分解命令
+    int param_num = sscanf(recv_msg, "%s %s", command, others);
+    if(param_num <= 0) {
+        // code == 500
+    } else if (param_num == 1) {
+        //send_response(command, NULL, idx);
+    } else {
+        strcpy(param, recv_msg + strlen(command) + 1);
+        //send_response(command, param, idx);
+    }
     //length = strip_crlf(recv_msg, length);
     printf("TEST_RECV_MSG: %s\n", recv_msg);
-    return 0;
+    return 1;
 }
