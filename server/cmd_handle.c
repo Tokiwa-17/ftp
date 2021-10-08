@@ -19,6 +19,12 @@ void cmd_handout(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "PASV") == 0) {
         PASV(param, idx);
     }
+    if (strcmp(cmd, "TYPE") == 0) {
+        TYPE(param, idx);
+    }
+    if (strcmp(cmd, "QUIT") == 0) {
+        QUIT(param, idx);
+    }
 }
 
 void login() {
@@ -160,4 +166,26 @@ void TYPE(char *param, int idx) {
         // TODO manage_trans_fds
         send_test(serv_sock, resp_msg);
     }
+}
+
+void QUIT(char *param, int idx) {
+    if(param != NULL) {
+        printf("Param error!\n");
+        return;
+    }
+    char file_info[50], byte_info[50];
+    // TODO 记录传输的文件数和字节数
+    int files_num = 0, bytes_num = 0;
+    sprintf(file_info, "Total number of files transferred: %d", files_num);
+    sprintf(byte_info, "Total number of bytes transferred: %d", bytes_num);
+    char resp_msg[100];
+    sprintf(resp_msg, "200\r\n %s\r\n %s\r\n", file_info, byte_info);
+    //printf("test_quit: %s", resp_msg);
+    int serv_sock;
+    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+        printf("Socket establish failed!\n");
+        return ;
+    }
+    // TODO manage_trans_fds
+    send_test(serv_sock, resp_msg);
 }
