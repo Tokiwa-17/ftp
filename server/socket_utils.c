@@ -12,6 +12,7 @@
 
 extern int max_serve_sock;
 extern fd_set handle_set;
+extern struct client_status clients[MAX_CLIENTS];
 
 int generate_sock(int port) {
     int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -40,4 +41,34 @@ void sock_init(int sock) {
     }
     FD_ZERO(&handle_set);
     FD_SET(sock, &handle_set);
+}
+
+int manage_fds(int cur_fd) {
+    int i = 0;
+    for (;i < MAX_CLIENTS;i++) {
+        if (clients[i].connect_serve_sock == -1) {
+            clients[i].connect_serve_sock = cur_fd;
+            break;
+        }
+    }
+    if (i == MAX_CLIENTS) return 0;
+    FD_SET(cur_fd, &handle_set);
+    if (cur_fd > max_serve_sock) max_serve_sock = cur_fd;
+    if (i > max_idx) max_idx = i;
+    return 1;
+}
+
+void close_fd(int idx) {
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if(clnt_sock == -1) {
+        close(clnt_sock);
+        clients[idx].connect_serve_sock = -1;
+        clients[idx].state = NOT_LOG_IN;
+        clients[idx].mode = NO_CONNECTION;
+        clients[idx].offset = 0;
+        clients[idx].transfers_num = 0;
+        clients[idx].bytes_num = 0;
+        strcpy(clients[idx].url_prefix, "/");
+        FD_CLR(clnt_sock, &handle_set);
+    }
 }

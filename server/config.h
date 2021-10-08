@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 int listen_port;
 int max_serve_sock;
+int max_idx;        //正在连接的客户端最大下标
 char LOCAL_IP[20];// = "192.168.44.133";
 char PREFIX[100]; //= "/home/ylf/desktop/myFTP/ftp";
 fd_set handle_set; // 实际是一long类型的数组，每一个数组元素都能与一打开的文件句柄建立联系
