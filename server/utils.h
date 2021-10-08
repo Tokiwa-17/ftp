@@ -13,7 +13,7 @@ struct client_status
     struct sockaddr_in addr;
     int rw; // read or write or list
     char filename[512]; // file to retrieve or store
-    char prefix[128]; 
+    char url_prefix[100]; 
     char rename_file[512]; // file new name
     int start_pos; // transfer offset
     int bytes; // how many bytes

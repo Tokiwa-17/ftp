@@ -122,3 +122,24 @@ void PASV(char *param, int idx) {
     // TODO manage_trans_fds
     send_test(serv_sock, resp_msg);
 }
+
+void RETR(char *param, int idx) {
+
+
+}
+
+void SYST(char *param, int idx) {
+
+    if (param != NULL) {
+        printf("Param error!\n");
+        return;
+    }
+    char resp_msg[30] = "215 UNIX Type: L8\r\n";
+    int serv_sock;
+    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+        printf("Socket establish failed!\n");
+        return ;
+    }
+    // TODO manage_trans_fds
+    send_test(serv_sock, resp_msg);
+}
