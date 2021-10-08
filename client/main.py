@@ -34,7 +34,18 @@ def port():
     s.recv(15)
     print("success!")
 
+def pasv():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('192.168.44.133', 1234))
+    except sockete.error as msg:
+        print(msg)
+        print(sys.exit(1))
+    s.recv(50)
+    print("PASV success!")
+
 if __name__ == '__main__':
     #login()
-    port()
+    #port()
+    pasv()
 
