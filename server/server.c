@@ -14,6 +14,7 @@ int main(){
     //login();
     //PORT("192 168 44 133 12 34", 1);
     //PASV(NULL, 1);
-    SYST(NULL, 1);
+    //SYST(NULL, 1);
+    TYPE("I", 1);
     return 0;
 }

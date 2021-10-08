@@ -6,3 +6,4 @@ void PORT(char *, int);
 void PASV(char *, int);
 void RETR(char *, int);
 void SYST(char *, int);
+void TYPE(char *, int);

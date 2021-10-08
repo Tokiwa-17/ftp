@@ -143,3 +143,21 @@ void SYST(char *param, int idx) {
     // TODO manage_trans_fds
     send_test(serv_sock, resp_msg);
 }
+
+void TYPE(char *param, int idx) {
+
+    if (param == NULL) {
+        printf("Param error!\n");
+        return ;
+    }
+    if (strcmp(param, "I") == 0) {
+        char resp_msg[30] = "200 Type set to I.\r\n";
+        int serv_sock;
+        if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+            printf("Socket establish failed!\n");
+            return ;
+        }
+        // TODO manage_trans_fds
+        send_test(serv_sock, resp_msg);
+    }
+}
