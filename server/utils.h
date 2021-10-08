@@ -2,10 +2,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 int check_ipaddr(int);
+int check_port_invalid(int);
 
 struct client_status
 {
-    int connect_fd;  // fd for control 
+    int connect_fd;  // fd for control 文件描述符
     int transfer_fd; // fd for file transfer
     int state;       // state(logged in/not logged in/file transfering, etc.)
     int mode; // file transfer mode, including preparing stages

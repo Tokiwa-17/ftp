@@ -11,6 +11,16 @@
 
 struct client_status clients[MAX_CLIENTS];
 
+void cmd_handout(char *cmd, char *param, int idx) {
+
+    if (strcmp(cmd, "PORT") == 0) {
+        PORT(param, idx);
+    }
+    if (strcmp(cmd, "PASV") == 0) {
+        PASV(param, idx);
+    }
+}
+
 void login() {
     int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     struct sockaddr_in serv_addr;
@@ -84,4 +94,31 @@ void PORT(char *param, int idx) {
     strcpy(buf, "PORT CMD TEST\r\n");
     printf("buf_test: %s\n", buf);
     send_test(serv_sock, buf);
+}
+
+void PASV(char *param, int idx) {
+    
+    if (param != NULL) {
+        printf("Params error!\n");
+        return ; 
+    }
+    // TODO 如果已经存在一个连接
+    int port = rand() % 45536 + 20000;
+    while(check_port_invalid(port)) {
+        port = rand() % 45536 + 20000;
+    }
+    int h1, h2, h3, h4, p1, p2;
+    sscanf(LOCAL_IP, "%d.%d.%d.%d", &h1, &h2, &h3, &h4);
+    p1 = port / 256;
+    p2 = port % 256;
+    char resp_msg[50];
+    sprintf(resp_msg, "Entering Passive Mode (%d,%d,%d,%d,%d,%d)", h1, h2, h3, h4, p1, p2);
+    //printf("test_resp_msg: %s\n", resp_msg);
+    int serv_sock;
+    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+        printf("Socket establish failed!\n");
+        return ;
+    }
+    // TODO manage_trans_fds
+    send_test(serv_sock, resp_msg);
 }

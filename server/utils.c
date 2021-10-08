@@ -13,6 +13,10 @@ int check_ipaddr(int ip) { //检验ip地址是否合法
     return 1;
 }
 
+int check_port_invalid(int port) {
+    return 0;
+}
+
 void send_test(int serve_sock, char * buf) {
     struct sockaddr_in serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
