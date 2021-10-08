@@ -8,3 +8,4 @@ void RETR(char *, int);
 void SYST(char *, int);
 void TYPE(char *, int);
 void QUIT(char *, int);
+void ABOR(char *, int);

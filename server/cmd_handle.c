@@ -189,3 +189,12 @@ void QUIT(char *param, int idx) {
     // TODO manage_trans_fds
     send_test(serv_sock, resp_msg);
 }
+
+void ABOR(char *param, int idx) {
+    int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(param != NULL) {
+        send_response(serve_sock, 504, NULL);
+        return ;
+    }
+    send_response(serve_sock, 226, NULL);
+}

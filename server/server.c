@@ -16,6 +16,7 @@ int main(){
     //PASV(NULL, 1);
     //SYST(NULL, 1);
     //TYPE("I", 1);
-    QUIT(NULL, 1);
+    //QUIT(NULL, 1);
+    ABOR(NULL, 1);
     return 0;
 }
