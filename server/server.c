@@ -17,6 +17,7 @@ int main(){
     //SYST(NULL, 1);
     //TYPE("I", 1);
     //QUIT(NULL, 1);
-    ABOR(NULL, 1);
+    //ABOR(NULL, 1);
+    RETR("1.txt", 1);
     return 0;
 }

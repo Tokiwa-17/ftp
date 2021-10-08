@@ -130,7 +130,25 @@ void PASV(char *param, int idx) {
 }
 
 void RETR(char *param, int idx) {
-
+    int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
+    if (param == NULL) {
+        send_response(serve_sock, 504, NULL);
+        return ;
+    }
+    char absolute_path[100];
+    get_absolute_path(PREFIX, param, absolute_path);
+    printf("Absolute_path test: %s\r\n", absolute_path);
+    FILE *f;
+    if ((f = fopen(absolute_path, "rb+")) == NULL){
+        printf("File Open Failed!\n");
+        send_response(serve_sock, 550, NULL);
+        return;
+    }
+    else {
+        fclose(f);
+        printf("File Open Success!\n");
+    }
+    // TODO 更新客户端的状态
 
 }
 

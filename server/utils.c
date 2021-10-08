@@ -52,7 +52,29 @@ void send_response(int serve_sock, int code, char *resp) {
         case 504:
             sprintf(resp_msg, "%d %s\r\n", code, "Parameters Error.\n");
             break;
+        case 550:
+            sprintf(resp_msg, "%d %s\r\n", code, "File Opean Failed\n");
+            break;
     }
     int length = strlen(resp_msg);
     send(clnt_sock, resp_msg, length, MSG_WAITALL);
+}
+
+void get_absolute_path(char *prefix, char *src, char *dest)
+{
+    int len = strlen(prefix);
+    if (src[0] == '/') // 给定的路径是绝对路径
+        sprintf(dest, "%s", src);
+    else if (src[0] == '.') { // 给定的路径是相对路径
+        if (prefix[len - 1] == '/') 
+            sprintf(dest, "%s%s", prefix, src + 2);
+        else
+            sprintf(dest, "%s/%s", prefix, src + 2);
+    }
+    else {
+        if (prefix[len - 1] == '/')
+            sprintf(dest, "%s%s", prefix, src);
+        else
+            sprintf(dest, "%s/%s", prefix, src);
+    }
 }

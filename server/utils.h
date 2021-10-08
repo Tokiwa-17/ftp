@@ -23,3 +23,5 @@ struct client_status
 void send_test(int serve_sock, char *buf);
 
 void send_response(int serve_sock, int code, char *resp);
+
+void get_absolute_path(char *prefix, char *src, char *dest);
