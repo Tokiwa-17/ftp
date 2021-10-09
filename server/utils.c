@@ -78,6 +78,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 250:
             sprintf(resp_final, "%d %s\r\n", code, resp_msg);
             break;
+        case 257:
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
         case 331:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
             break;

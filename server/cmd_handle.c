@@ -291,7 +291,14 @@ void CWD(char *param, int idx) {
 }
 
 void PWD(char *param, int idx) {
-    
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param != NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char resp_msg[200];
+    sprintf(resp_msg, "%s/", clients[idx].url_prefix);
+    send_response(clnt_sock, 257, resp_msg);
 }
 
 void LIST(char *param, int idx) {
