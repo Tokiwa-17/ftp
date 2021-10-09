@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 extern struct client_status clients[MAX_CLIENTS];
 
@@ -176,7 +178,7 @@ void STOR(char *param, int idx) {
     get_absolute_path(clients[idx].url_prefix, param, absolute_path);
     int len = strlen(ROOT);
     if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
-    else sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path + 1);
+    else sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path);
     FILE *f;
     //printf("PATH: %s\n", clients[idx].filename);
     if ((f = fopen(clients[idx].filename, "ab+")) == NULL){
@@ -248,6 +250,50 @@ void ABOR(char *param, int idx) {
     send_response(clnt_sock, 226, NULL);
 }
 
+void MKD(char *param, int idx) {
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    strcpy(ROOT, "/home/ylf/desktop/myFTP/ftp");
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char path[200], absolute_path[200];
+    get_absolute_path(clients[idx].url_prefix, param, path);
+    int len = strlen(ROOT);
+    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    printf("%s\n", absolute_path);
+    if (mkdir(absolute_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
+        send_response(clnt_sock, 250, path);
+
+}
+
+void CWD(char *param, int idx) {
+    
+}
+
+void PWD(char *param, int idx) {
+    
+}
+
+void LIST(char *param, int idx) {
+    
+}
+
+void RMD(char *param, int idx) {
+    
+}
+
+void RNFR(char *param, int idx) {
+    
+}
+
+void RNTO(char *param, int idx) {
+    
+}
+
 void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "USER") == 0) USER(param, idx);
     if (strcmp(cmd, "PASS") == 0) PASS(param, idx);
@@ -259,4 +305,11 @@ void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "TYPE") == 0) TYPE(param, idx);
     if (strcmp(cmd, "QUIT") == 0) QUIT(param, idx);
     if (strcmp(cmd, "ABOR") == 0) ABOR(param, idx);
+    if (strcmp(cmd, "MKD")  == 0) MKD(param, idx);
+    if (strcmp(cmd, "CWD")  == 0) CWD(param, idx);
+    if (strcmp(cmd, "PWD")  == 0) PWD(param, idx);
+    if (strcmp(cmd, "LIST") == 0) LIST(param, idx);
+    if (strcmp(cmd, "RMD")  == 0) RMD(param, idx);
+    if (strcmp(cmd, "RNFR") == 0) RNFR(param, idx);
+    if (strcmp(cmd, "RNTO") == 0) RNTO(param, idx);
 }

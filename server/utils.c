@@ -74,6 +74,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 230:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, access restrictions apply.");
             break;
+        case 250:
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
         case 331:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
             break;
@@ -98,6 +101,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 530:
             sprintf(resp_final, "%d %s\r\n", code, "Permission denied.");
             break;
+        case 550:
+        sprintf(resp_final, "%d %s\r\n", code, "File does not exist or permission denied.");
+        break;
 
     }
     send(clnt_sock, resp_final, strlen(resp_final), MSG_WAITALL);
