@@ -81,37 +81,55 @@ void PORT(char *param, int idx) {
         send_response(clnt_sock, 500, NULL);
         return ;
     }
-    clients[idx].transfer_serve_sock = tr_sock;
-    FD_SET(tr_sock, &handle_set);
-    max_serve_sock = max(tr_sock, max_serve_sock);
+    update_trans_sock(tr_sock, idx);
+    //clients[idx].transfer_serve_sock = tr_sock;
+    //FD_SET(tr_sock, &handle_set);
+    //max_serve_sock = max(tr_sock, max_serve_sock);
     send_response(clnt_sock, 200, NULL);
 }
 
 void PASV(char *param, int idx) {
-    
+    int clnt_sock = clients[idx].connect_serve_sock;
+    int tr_sock = clients[idx].transfer_serve_sock;
     if (param != NULL) {
-        printf("Params error!\n");
+        send_response(clnt_sock, 504, NULL);
         return ; 
     }
-    // TODO 如果已经存在一个连接
+    if (tr_sock != -1) {
+        int tmp_tr_sock = clients[idx].transfer_serve_sock;
+        if (tmp_tr_sock != -1) {
+            close(tmp_tr_sock);
+            clients[idx].transfer_serve_sock = -1;
+            clients[idx].state = LOG_IN;
+            clients[idx].mode = NO_CONNECTION;
+            clients[idx].offset = 0;
+            FD_CLR(tmp_tr_sock, &handle_set);
+        }
+    }
     int port = rand() % 45536 + 20000;
     while(check_port_invalid(port)) {
         port = rand() % 45536 + 20000;
     }
+    printf("TEST_PORT: %d\n", port);
     int h1, h2, h3, h4, p1, p2;
+    strcpy(LOCAL_IP, "0.0.0.0");
     sscanf(LOCAL_IP, "%d.%d.%d.%d", &h1, &h2, &h3, &h4);
     p1 = port / 256;
     p2 = port % 256;
-    char resp_msg[50];
+    char resp_msg[100];
     sprintf(resp_msg, "Entering Passive Mode (%d,%d,%d,%d,%d,%d)", h1, h2, h3, h4, p1, p2);
-    //printf("test_resp_msg: %s\n", resp_msg);
-    int serv_sock;
-    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        printf("Socket establish failed!\n");
-        return ;
+    //printf("%s\n", resp_msg);
+    clients[idx].mode = LISTENING;
+    tr_sock = generate_sock(port);
+    if(tr_sock == -1) {
+        send_response(clnt_sock, 500, NULL);
+        return;
     }
-    // TODO manage_trans_fds
-    send_test(serv_sock, resp_msg);
+    update_trans_sock(tr_sock, idx);
+    //clients[idx].transfer_serve_sock = tr_sock;
+    //FD_SET(tr_sock, &handle_set);
+    //max_serve_sock = max(tr_sock, max_serve_sock);
+    send_response(clnt_sock, 227, resp_msg);
 }
 
 void RETR(char *param, int idx) {

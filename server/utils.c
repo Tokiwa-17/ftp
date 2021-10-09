@@ -19,6 +19,13 @@ int check_ipaddr(int ip) { //检验ip地址是否合法
 }
 
 int check_port_invalid(int port) {
+    int clnt_sock = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    inet_pton(AF_INET, "0.0.0.0", &addr.sin_addr);
+    if (bind(clnt_sock, (struct sockaddr *)(&addr), sizeof(addr)) == -1) return 1;
+    close(clnt_sock);
     return 0;
 }
 
@@ -47,6 +54,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");
             break; 
+        case 227:
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
         case 230:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, access restrictions apply.");
             break;

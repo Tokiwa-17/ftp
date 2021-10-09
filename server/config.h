@@ -7,6 +7,7 @@
 #define NO_CONNECTION 0
 #define PASV_MODE 1
 #define READY 2
+#define LISTENING 3
 
 #include <sys/socket.h>
 #include <netinet/in.h>

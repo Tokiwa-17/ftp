@@ -72,3 +72,9 @@ void close_fd(int idx) {
         FD_CLR(clnt_sock, &handle_set);
     }
 }
+
+void update_trans_sock(int tr_sock, int idx) {
+    clients[idx].transfer_serve_sock = tr_sock;
+    FD_SET(tr_sock, &handle_set);
+    max_serve_sock = max(tr_sock, max_serve_sock);
+}
