@@ -15,3 +15,5 @@ void get_absolute_path(char *prefix, char *src, char *dest);
 int recv_from_client(int clnt_sock, int idx);
 
 void cmd_handler(char *cmd, char *param, int idx);
+
+int transfer(char *param, int idx);

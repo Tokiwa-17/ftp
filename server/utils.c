@@ -1,5 +1,7 @@
 #include "utils.h"
 #include "cmd_handle.h"
+#include "socket_utils.h"
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -48,6 +50,9 @@ void send_test(int serve_sock, char * buf) {
 void send_response(int clnt_sock, int code, char *resp_msg) {
     char resp_final[200];
     switch (code) {
+        case 150:
+            sprintf(resp_final, "%d %s\r\n", code, "RETR command success.");
+            break;
         case 200:
             sprintf(resp_final, "%d %s\r\n", code, "Port transferred successfully.");
             break;
@@ -62,6 +67,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
             break;
         case 331:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
+            break;
+        case 425:
+            sprintf(resp_final, "%d %s\r\n", code, "No TCP connection was established.");
             break;
         case 500:
             sprintf(resp_final, "%d %s\r\n", code, "No command.");
@@ -135,5 +143,29 @@ int recv_from_client(int clnt_sock, int idx) {
         cmd_handler(command, param, idx);
     }
     //printf("TEST_RECV_MSG: %s\n", recv_msg);
+    return 1;
+}
+
+int transfer(char *param, int idx) {
+    int clnt_sock = clients[idx].connect_serve_sock;
+    int mode = clients[idx].mode;
+    if (mode == NO_CONNECTION) {
+        send_response(clnt_sock, 425, NULL);
+        return 0;
+    } else if (mode == READY) {
+        clients[idx].mode = PORT_MODE;
+        int tr_sock = clients[idx].transfer_serve_sock;
+        struct sockaddr_in addr = clients[idx].addr;
+        if (connect(tr_sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+            close(tr_sock);
+            send_response(clnt_sock, 425, NULL);
+            return 0;
+        }
+        send_response(clnt_sock, 150, NULL);
+    } else if (mode == LISTENING) {
+        printf("TTTTTTTTTTTTTTTTTTTTTTTTT\n");
+        clients[idx].mode = PASV_MODE;
+        send_response(clnt_sock, 150, NULL);
+    }
     return 1;
 }

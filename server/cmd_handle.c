@@ -112,7 +112,9 @@ void PASV(char *param, int idx) {
     }
     printf("TEST_PORT: %d\n", port);
     int h1, h2, h3, h4, p1, p2;
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     strcpy(LOCAL_IP, "0.0.0.0");
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     sscanf(LOCAL_IP, "%d.%d.%d.%d", &h1, &h2, &h3, &h4);
     p1 = port / 256;
     p2 = port % 256;
@@ -133,26 +135,32 @@ void PASV(char *param, int idx) {
 }
 
 void RETR(char *param, int idx) {
-    int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    strcpy(ROOT, "/home/ylf/desktop/myFTP/ftp");
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    int clnt_sock = clients[idx].connect_serve_sock;
     if (param == NULL) {
-        send_response(serve_sock, 504, NULL);
+        send_response(clnt_sock, 504, NULL);
         return ;
     }
     char absolute_path[100];
-    get_absolute_path(PREFIX, param, absolute_path);
-    printf("Absolute_path test: %s\r\n", absolute_path);
+    get_absolute_path(clients[idx].url_prefix, param, absolute_path);
+    int len = strlen(ROOT);
+    if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
+    else sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path + 1);
     FILE *f;
-    if ((f = fopen(absolute_path, "rb+")) == NULL){
+    printf("PATH: %s\n", clients[idx].filename);
+    if ((f = fopen(clients[idx].filename, "rb+")) == NULL){
         printf("File Open Failed!\n");
-        send_response(serve_sock, 550, NULL);
+        send_response(clnt_sock, 530, NULL);
         return;
     }
-    else {
-        fclose(f);
-        printf("File Open Success!\n");
-    }
+    else fclose(f);
     // TODO 更新客户端的状态
-
+    if (!transfer(param, idx)) return;
+    clients[idx].transfers_num += 1;
+    clients[idx].rw_state = READ;
+    clients[idx].state =TRANSFER;
 }
 
 void STOR(char *param, int idx) {
@@ -244,22 +252,11 @@ void ABOR(char *param, int idx) {
 }
 
 void cmd_handler(char *cmd, char *param, int idx) {
-    if (strcmp(cmd, "USER") == 0) {
-        USER(param, idx);
-    }
-    if (strcmp(cmd, "PASS") == 0) {
-        PASS(param, idx);
-    }
-    if (strcmp(cmd, "PORT") == 0) {
-        PORT(param, idx);
-    }
-    if (strcmp(cmd, "PASV") == 0) {
-        PASV(param, idx);
-    }
-    if (strcmp(cmd, "TYPE") == 0) {
-        TYPE(param, idx);
-    }
-    if (strcmp(cmd, "QUIT") == 0) {
-        QUIT(param, idx);
-    }
+    if (strcmp(cmd, "USER") == 0) USER(param, idx);
+    if (strcmp(cmd, "PASS") == 0) PASS(param, idx);
+    if (strcmp(cmd, "PORT") == 0) PORT(param, idx);
+    if (strcmp(cmd, "PASV") == 0) PASV(param, idx);
+    if (strcmp(cmd, "RETR") == 0) RETR(param, idx);
+    if (strcmp(cmd, "TYPE") == 0) TYPE(param, idx);
+    if (strcmp(cmd, "QUIT") == 0) QUIT(param, idx);
 }
