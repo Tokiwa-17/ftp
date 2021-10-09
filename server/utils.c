@@ -114,24 +114,6 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
     return;
 }
 
-void get_absolute_path(char *prefix, char *src, char *dest)
-{
-    int len = strlen(prefix);
-    if (src[0] == '/') // 给定的路径是绝对路径
-        sprintf(dest, "%s", src);
-    else if (src[0] == '.') { // 给定的路径是相对路径
-        if (prefix[len - 1] == '/') 
-            sprintf(dest, "%s%s", prefix, src + 2);
-        else
-            sprintf(dest, "%s/%s", prefix, src + 2);
-    }
-    else {
-        if (prefix[len - 1] == '/')
-            sprintf(dest, "%s%s", prefix, src);
-        else
-            sprintf(dest, "%s/%s", prefix, src);
-    }
-}
 int clear_crlf(char *str, int len) {
     int i = len - 1;
     while (str[i] == '\r' || str[i] == '\n') {

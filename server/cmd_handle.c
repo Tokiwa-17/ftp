@@ -306,7 +306,19 @@ void LIST(char *param, int idx) {
 }
 
 void RMD(char *param, int idx) {
-    
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char path[200], absolute_path[200];
+    get_absolute_path(clients[idx].url_prefix, param, path);
+    int len = strlen(ROOT);
+    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    //printf("ABSPATH: %s\n", absolute_path);
+    if (del_dir(absolute_path)) send_response(clnt_sock, 250, NULL);
+    else send_response(clnt_sock, 550, NULL);
 }
 
 void RNFR(char *param, int idx) {
