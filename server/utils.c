@@ -39,6 +39,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");
             break; 
+        case 230:
+            sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, access restrictions apply.");
+            break;
         case 500:
             sprintf(resp_final, "%d %s\r\n", code, "No command.");
             break;

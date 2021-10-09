@@ -15,17 +15,27 @@ extern struct client_status clients[MAX_CLIENTS];
 void USER(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int state = clients[idx].state;
-    printf("%s\n", param);
-    printf("anonymous\n");
-    printf("TEST: %d\n", strcmp(param, "anonymous"));
+    //printf("TEST: %d\n", strcmp(param, "anonymous"));
     if (param == NULL) {
         send_response(clnt_sock, 504, NULL);
     } else if (state != NOT_LOG_IN) {
         send_response(clnt_sock, 530, NULL);
     } else if (strcmp(param, "anonymous") == 0) {
-        clients[idx].state = LOG_IN;
+        clients[idx].state = LOGGING;
         send_response(clnt_sock, 331, NULL);
     } else send_response(clnt_sock, 530, NULL);
+}
+
+void PASS(char *param, int idx) {
+    int clnt_sock = clients[idx].connect_serve_sock;
+    int state = clients[idx].state;
+    if (state != LOGGING) {
+        // USER -> LOGGING
+        send_response(clnt_sock, 530, NULL);
+        return;
+    }
+    clients[idx].state = LOG_IN;
+    send_response(clnt_sock, 230, NULL);
 }
 
 void PORT(char *param, int idx) {
@@ -207,7 +217,9 @@ void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "USER") == 0) {
         USER(param, idx);
     }
-
+    if (strcmp(cmd, "PASS") == 0) {
+        PASS(param, idx);
+    }
     if (strcmp(cmd, "PORT") == 0) {
         PORT(param, idx);
     }
