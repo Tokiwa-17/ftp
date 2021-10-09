@@ -149,6 +149,7 @@ int recv_from_client(int clnt_sock, int idx) {
 int transfer(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int mode = clients[idx].mode;
+    printf("MODE: %d\n", mode);
     if (mode == NO_CONNECTION) {
         send_response(clnt_sock, 425, NULL);
         return 0;
@@ -163,9 +164,13 @@ int transfer(char *param, int idx) {
         }
         send_response(clnt_sock, 150, NULL);
     } else if (mode == LISTENING) {
-        printf("TTTTTTTTTTTTTTTTTTTTTTTTT\n");
         clients[idx].mode = PASV_MODE;
         send_response(clnt_sock, 150, NULL);
     }
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    else {
+        send_response(clnt_sock, 150, NULL);
+    }
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     return 1;
 }

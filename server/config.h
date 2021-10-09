@@ -12,6 +12,7 @@
 #define PORT_MODE 4
 
 #define READ 1
+#define WRITE 2
 
 #include <sys/socket.h>
 #include <netinet/in.h>
