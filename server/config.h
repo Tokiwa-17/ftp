@@ -14,6 +14,7 @@
 
 #define READ 1
 #define WRITE 2
+#define LIST 3
 
 #include <sys/socket.h>
 #include <netinet/in.h>

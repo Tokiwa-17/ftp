@@ -93,6 +93,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 426:
             sprintf(resp_final, "%d %s\r\n", code, "FTP service is continuing.");
             break;
+        case 451:
+            sprintf(resp_final, "%d %s\r\n", code, "Failed to read/write file.");
+            break;
         case 500:
             sprintf(resp_final, "%d %s\r\n", code, "No command.");
             break;

@@ -301,8 +301,25 @@ void PWD(char *param, int idx) {
     send_response(clnt_sock, 257, resp_msg);
 }
 
-void LIST(char *param, int idx) {
-    
+void LIST_(char *param, int idx) {
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param != NULL) {
+        char path[200];
+        get_absolute_path(clients[idx].url_prefix, param, path);
+        int len = strlen(ROOT);
+        if(ROOT[len - 1] == '/')   sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        else sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        if (!check_file(clients[idx].filename) && !check_folder(clients[idx].filename)) {
+            send_response(clnt_sock, 451, NULL);
+            return;
+        } else {
+            if(!transfer(clients[idx].filename, idx)) return;
+            clients[idx].rw_state = LIST;
+        }
+    } else {
+            if(!transfer(clients[idx].filename, idx)) return;
+            clients[idx].rw_state = LIST;
+    }
 }
 
 void RMD(char *param, int idx) {
@@ -382,7 +399,7 @@ void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "MKD")  == 0) MKD(param, idx);
     if (strcmp(cmd, "CWD")  == 0) CWD(param, idx);
     if (strcmp(cmd, "PWD")  == 0) PWD(param, idx);
-    if (strcmp(cmd, "LIST") == 0) LIST(param, idx);
+    if (strcmp(cmd, "LIST") == 0) LIST_(param, idx);
     if (strcmp(cmd, "RMD")  == 0) RMD(param, idx);
     if (strcmp(cmd, "RNFR") == 0) RNFR(param, idx);
     if (strcmp(cmd, "RNTO") == 0) RNTO(param, idx);
