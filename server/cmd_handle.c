@@ -321,7 +321,7 @@ void RMD(char *param, int idx) {
     else send_response(clnt_sock, 550, NULL);
 }
 
-void RNFR(char *param, int idx) { // 重命名
+void RNFR(char *param, int idx) { // 重命名开始
     int clnt_sock = clients[idx].connect_serve_sock;
     if(param == NULL) {
         send_response(clnt_sock, 504, NULL);
@@ -341,8 +341,31 @@ void RNFR(char *param, int idx) { // 重命名
     else send_response(clnt_sock, 550, NULL);
 }
 
-void RNTO(char *param, int idx) {
-    
+void RNTO(char *param, int idx) { // 重命名结束
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (clients[idx].state != RNFR_CMP) {
+        send_response(clnt_sock, 503, "RNFR required.");
+        return ;
+    }
+    clients[idx].state = LOG_IN;
+    if (param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char path[200], absolute_path[200], cmd[400];
+    get_absolute_path(clients[idx].url_prefix, param, path);
+    int len = strlen(ROOT);
+    if(ROOT[len - 1] == '/') sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    sprintf(cmd, "mv %s %s", clients[idx].rename_file, absolute_path);
+    if(system(cmd) == -1) {
+        send_response(clnt_sock, 550, NULL);
+        return;
+    } else {
+        char resp_msg[100];
+        strcpy(resp_msg, "RNTO success.");
+        send_response(clnt_sock, 250, resp_msg);
+    }
 }
 
 void cmd_handler(char *cmd, char *param, int idx) {

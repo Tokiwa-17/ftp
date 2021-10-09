@@ -102,6 +102,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 502:
             sprintf(resp_final, "%d %s\r\n", code, "Invalid parameters.");
             break;
+        case 503:
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
         case 504:
             sprintf(resp_final, "%d %s\r\n", code, "Parameters error.");
             break;
