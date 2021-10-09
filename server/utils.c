@@ -54,7 +54,10 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
             sprintf(resp_final, "%d %s\r\n", code, "RETR command success.");
             break;
         case 200:
-            sprintf(resp_final, "%d %s\r\n", code, "Port transferred successfully.");
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
+        case 215:
+            sprintf(resp_final, "%d %s\r\n", code, "UNIX Type: L8");
             break;
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");

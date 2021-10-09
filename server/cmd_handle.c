@@ -85,7 +85,7 @@ void PORT(char *param, int idx) {
     //clients[idx].transfer_serve_sock = tr_sock;
     //FD_SET(tr_sock, &handle_set);
     //max_serve_sock = max(tr_sock, max_serve_sock);
-    send_response(clnt_sock, 200, NULL);
+    send_response(clnt_sock, 200, "PORT success.");
 }
 
 void PASV(char *param, int idx) {
@@ -196,37 +196,25 @@ void STOR(char *param, int idx) {
 }
 
 void SYST(char *param, int idx) {
-
+    int clnt_sock = clients[idx].connect_serve_sock;
     if (param != NULL) {
-        printf("Param error!\n");
+        send_response(clnt_sock, 504, NULL);
         return;
     }
-    char resp_msg[30] = "215 UNIX Type: L8\r\n";
-    int serv_sock;
-    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        printf("Socket establish failed!\n");
-        return ;
-    }
-    // TODO manage_trans_fds
-    send_test(serv_sock, resp_msg);
+    send_response(clnt_sock, 215, NULL);
 }
 
 void TYPE(char *param, int idx) {
 
+    int clnt_sock = clients[idx].connect_serve_sock;
     if (param == NULL) {
-        printf("Param error!\n");
+        send_response(clnt_sock, 504, NULL);
         return ;
-    }
-    if (strcmp(param, "I") == 0) {
-        char resp_msg[30] = "200 Type set to I.\r\n";
-        int serv_sock;
-        if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-            printf("Socket establish failed!\n");
-            return ;
-        }
-        // TODO manage_trans_fds
-        send_test(serv_sock, resp_msg);
-    }
+    } else if (strcmp(param, "I") == 0) {
+        char resp_msg[30] = "Type set to I.";
+        send_response(clnt_sock, 200, resp_msg);
+    } 
+    else send_response(clnt_sock, 502, NULL);
 }
 
 void QUIT(char *param, int idx) {
@@ -267,6 +255,7 @@ void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "PASV") == 0) PASV(param, idx);
     if (strcmp(cmd, "RETR") == 0) RETR(param, idx);
     if (strcmp(cmd, "STOR") == 0) STOR(param, idx);
+    if (strcmp(cmd, "SYST") == 0) SYST(param, idx);
     if (strcmp(cmd, "TYPE") == 0) TYPE(param, idx);
     if (strcmp(cmd, "QUIT") == 0) QUIT(param, idx);
 }
