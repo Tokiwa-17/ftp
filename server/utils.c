@@ -84,6 +84,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 331:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
             break;
+        case 350:
+            sprintf(resp_final, "%d %s\r\n", code, "File rename success.");
+            break;
         case 425:
             sprintf(resp_final, "%d %s\r\n", code, "No TCP connection was established.");
             break;

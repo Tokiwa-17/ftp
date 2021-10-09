@@ -4,6 +4,7 @@
 #define LOGGING 1 
 #define LOG_IN 2
 #define TRANSFER 3
+#define RNFR_CMP 4
 
 #define NO_CONNECTION 0
 #define PASV_MODE 1

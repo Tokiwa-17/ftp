@@ -54,3 +54,10 @@ int del_dir(char *path) {
     if (S_ISDIR(dir.st_mode) && !rmdir(path)) return 1;
     return 0;
 }
+
+int check_file(char *path) {
+    // 成功返回1
+    struct stat file;
+    if (access(path, F_OK) || stat(path, &file) != 0) return 0;
+    return 1;
+}

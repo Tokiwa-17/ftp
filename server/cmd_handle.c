@@ -321,8 +321,24 @@ void RMD(char *param, int idx) {
     else send_response(clnt_sock, 550, NULL);
 }
 
-void RNFR(char *param, int idx) {
-    
+void RNFR(char *param, int idx) { // 重命名
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if(param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char path[200], absolute_path[200];
+    get_absolute_path(clients[idx].url_prefix, param, path);
+    int len = strlen(ROOT);
+    if(ROOT[len - 1] == '/') sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    printf("ABS_PATH: %s\n", absolute_path);
+    if(check_file(absolute_path)) {
+        clients[idx].state = RNFR_CMP;
+        strcpy(clients[idx].rename_file, absolute_path);
+        send_response(clnt_sock, 350, NULL);
+    } 
+    else send_response(clnt_sock, 550, NULL);
 }
 
 void RNTO(char *param, int idx) {
