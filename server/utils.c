@@ -32,14 +32,25 @@ void send_test(int serve_sock, char * buf) {
     send(clnt_sock, buf, sizeof(buf) - 1, 0);
 }
 
+
 void send_response(int clnt_sock, int code, char *resp_msg) {
     char resp_final[200];
     switch (code) {
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");
             break; 
-
+        case 500:
+            sprintf(resp_final, "%d %s\r\n", code, "No command.");
+            break;
+        case 530:
+            sprintf(resp_final, "%d %s\r\n", code, "Permission denied.");
+            break;
+        case 331:
+            sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
+            break;
     }
+    send(clnt_sock, resp_final, strlen(resp_final), MSG_WAITALL);
+    return;
 }
 
 void get_absolute_path(char *prefix, char *src, char *dest)
@@ -60,12 +71,10 @@ void get_absolute_path(char *prefix, char *src, char *dest)
             sprintf(dest, "%s/%s", prefix, src);
     }
 }
-int strip_crlf(char *sentence, int len)
-{
+int clear_crlf(char *str, int len) {
     int i = len - 1;
-    while (sentence[i] == '\r' || sentence[i] == '\n')
-    {
-        sentence[i] = '\0';
+    while (str[i] == '\r' || str[i] == '\n') {
+        str[i] = '\0';
         i--;
     }
     return i + 1;
@@ -79,19 +88,21 @@ int recv_from_client(int clnt_sock, int idx) {
     int length = 0;
     length = recv(clnt_sock, recv_msg, 1000, 0);
     if(length <= 0) return 0;
-    printf("LENGTH: %d\n", length);
+    //printf("LENGTH: %d\n", length);
     recv_msg[length] = '\0';
     //分解命令
     int param_num = sscanf(recv_msg, "%s %s", command, others);
+    clear_crlf(command, strlen(command));
     if(param_num <= 0) {
         // code == 500
+        send_response(clnt_sock, 500, NULL);
     } else if (param_num == 1) {
-        //send_response(command, NULL, idx);
+        cmd_handler(command, NULL, idx);
     } else {
         strcpy(param, recv_msg + strlen(command) + 1);
-        //send_response(command, param, idx);
+        clear_crlf(param, strlen(param));
+        cmd_handler(command, param, idx);
     }
-    //length = strip_crlf(recv_msg, length);
-    printf("TEST_RECV_MSG: %s\n", recv_msg);
+    //printf("TEST_RECV_MSG: %s\n", recv_msg);
     return 1;
 }
