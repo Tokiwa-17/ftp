@@ -2,6 +2,7 @@
 #include "cmd_handle.h"
 #include "config.h"
 #include "socket_utils.h"
+#include "path_utils.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -267,11 +268,26 @@ void MKD(char *param, int idx) {
     printf("%s\n", absolute_path);
     if (mkdir(absolute_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
         send_response(clnt_sock, 250, path);
-
+    else send_response(clnt_sock, 550, NULL);
 }
 
 void CWD(char *param, int idx) {
-    
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
+    char path[200], absolute_path[200];
+    get_absolute_path(clients[idx].url_prefix, param, path);
+    int len = strlen(ROOT);
+    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    if (check_folder(absolute_path)) {
+        strcpy(clients[idx].url_prefix, path);
+        send_response(clnt_sock, 250, NULL);
+    }
+    else send_response(clnt_sock, 550, NULL);
+
 }
 
 void PWD(char *param, int idx) {

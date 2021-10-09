@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "cmd_handle.h"
 #include "socket_utils.h"
+#include "path_utils.h"
 #include "config.h"
 #include <stdio.h>
 #include <string.h>
