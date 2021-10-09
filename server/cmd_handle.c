@@ -39,40 +39,52 @@ void PASS(char *param, int idx) {
 }
 
 void PORT(char *param, int idx) {
-    // TODO:如果 param == NULL
+    int clnt_sock = clients[idx].connect_serve_sock;
+    int state = clients[idx].state;
+    int tr_sock = clients[idx].transfer_serve_sock;
+    if (param == NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }
     int h1, h2, h3, h4, p1, p2;
     int cnt = sscanf(param, "%d %d %d %d %d %d", &h1, &h2, &h3, &h4, &p1, &p2);
-    if(cnt != 6) {
-        printf("%d, params error!\n", cnt);
+    if (cnt != 6) {
+        send_response(clnt_sock, 501, NULL);
         return;
     }
-    if( !check_ipaddr(h1) || !check_ipaddr(h2) || !check_ipaddr(h3) || !check_ipaddr(h4)) {
-        printf("IP address error!\n");
+    if ( !check_ipaddr(h1) || !check_ipaddr(h2) || !check_ipaddr(h3) || !check_ipaddr(h4)) {
+        send_response(clnt_sock, 502, NULL);
         return;
     }
-    // TODO:如果当前客户端已经处于连接状态， 关闭该连接
+    // 如果当前客户端已经处于连接状态， 关闭该连接
+    if (tr_sock != -1) {
+        close(clnt_sock);
+        clients[idx].transfer_serve_sock = -1;
+        clients[idx].state = LOG_IN;
+        clients[idx].mode = NO_CONNECTION;
+        clients[idx].offset = 0;
+        FD_CLR(clnt_sock, &handle_set);
+    }
     char ip[20];
     sprintf(ip, "%d.%d.%d.%d", h1, h2, h3, h4);
-    //printf("IPAddr: %s\n",ip);
-    // TODO:更改客户端的状态为准备连接
+    // 更改客户端的状态为准备连接
+    clients[idx].mode = READY;
     int port = p1 * 256 + p2;
-
+    memset(&(clients[idx].addr), 0, sizeof(clients[idx].addr));
+    clients[idx].addr.sin_family = AF_INET;
+    clients[idx].addr.sin_port = htons(port);
     if(inet_pton(AF_INET, ip, &(clients[idx].addr.sin_addr)) != 1) {
-        //将点分十进制的ip地址转化为用于网络传输的数值格式
-        //返回值：若成功则为1，若输入不是有效的表达式则为0，若出错则为-1
-        printf("IP address conversion failed!\n");
+        send_response(clnt_sock, 530, NULL);
         return ;
     }
-    int serv_sock;
-    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        printf("Socket establish failed!\n");
+    if((tr_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+        send_response(clnt_sock, 500, NULL);
         return ;
     }
-    // TODO manage_trans_fds
-    char buf[1024];
-    strcpy(buf, "PORT CMD TEST\r\n");
-    printf("buf_test: %s\n", buf);
-    send_test(serv_sock, buf);
+    clients[idx].transfer_serve_sock = tr_sock;
+    FD_SET(tr_sock, &handle_set);
+    max_serve_sock = max(tr_sock, max_serve_sock);
+    send_response(clnt_sock, 200, NULL);
 }
 
 void PASV(char *param, int idx) {

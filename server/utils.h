@@ -1,5 +1,7 @@
 # pragma once
 
+int max(int a, int b);
+
 int check_ipaddr(int);
 
 int check_port_invalid(int);

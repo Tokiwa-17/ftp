@@ -8,6 +8,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+int max(int a, int b) {
+    if (a >= b) return a;
+    return b;
+}
+
 int check_ipaddr(int ip) { //检验ip地址是否合法
     if(ip < 0 || ip > 255) return 0;
     return 1;
@@ -36,21 +41,34 @@ void send_test(int serve_sock, char * buf) {
 void send_response(int clnt_sock, int code, char *resp_msg) {
     char resp_final[200];
     switch (code) {
+        case 200:
+            sprintf(resp_final, "%d %s\r\n", code, "Port transferred successfully.");
+            break;
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");
             break; 
         case 230:
             sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, access restrictions apply.");
             break;
+        case 331:
+            sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
+            break;
         case 500:
             sprintf(resp_final, "%d %s\r\n", code, "No command.");
+            break;
+        case 501:
+            sprintf(resp_final, "%d %s\r\n", code, "Parameters number error.");
+            break;
+        case 502:
+            sprintf(resp_final, "%d %s\r\n", code, "Invalid parameters.");
+            break;
+        case 504:
+            sprintf(resp_final, "%d %s\r\n", code, "Parameters error.");
             break;
         case 530:
             sprintf(resp_final, "%d %s\r\n", code, "Permission denied.");
             break;
-        case 331:
-            sprintf(resp_final, "%d %s\r\n", code, "Guest login ok, send your complete e-mail address as password.");
-            break;
+
     }
     send(clnt_sock, resp_final, strlen(resp_final), MSG_WAITALL);
     return;
