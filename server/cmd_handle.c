@@ -149,7 +149,7 @@ void RETR(char *param, int idx) {
     if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
     else sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path + 1);
     FILE *f;
-    printf("PATH: %s\n", clients[idx].filename);
+    //printf("PATH: %s\n", clients[idx].filename);
     if ((f = fopen(clients[idx].filename, "rb+")) == NULL){
         printf("File Open Failed!\n");
         send_response(clnt_sock, 530, NULL);
@@ -168,7 +168,6 @@ void STOR(char *param, int idx) {
     strcpy(ROOT, "/home/ylf/desktop/myFTP/ftp");
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     int clnt_sock = clients[idx].connect_serve_sock;
-    printf("EEEEEEEEEEEEEEEEEEEEEEEEEEEE\n");
     if (param == NULL) {
         send_response(clnt_sock, 504, NULL);
         return ;
@@ -179,17 +178,14 @@ void STOR(char *param, int idx) {
     if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
     else sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path + 1);
     FILE *f;
-    printf("PATH: %s\n", clients[idx].filename);
+    //printf("PATH: %s\n", clients[idx].filename);
     if ((f = fopen(clients[idx].filename, "ab+")) == NULL){
         printf("File Open Failed!\n");
         send_response(clnt_sock, 530, NULL);
         return;
     }
     else fclose(f);
-    // TODO 更新客户端的状态
-    printf("aaaaaaaaaaaaaaaa\n");
     if (!transfer(param, idx)) return;
-    printf("bbbbbbbbbbbbbbbbb\n");
     clients[idx].transfers_num += 1;
     clients[idx].rw_state = WRITE;
     clients[idx].state = TRANSFER;
@@ -218,34 +214,38 @@ void TYPE(char *param, int idx) {
 }
 
 void QUIT(char *param, int idx) {
-    if(param != NULL) {
-        printf("Param error!\n");
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param != NULL) {
+        send_response(clnt_sock, 504, NULL);
         return;
     }
-    char file_info[50], byte_info[50];
-    // TODO 记录传输的文件数和字节数
-    int files_num = 0, bytes_num = 0;
-    sprintf(file_info, "Total number of files transferred: %d", files_num);
-    sprintf(byte_info, "Total number of bytes transferred: %d", bytes_num);
-    char resp_msg[100];
-    sprintf(resp_msg, "200\r\n %s\r\n %s\r\n", file_info, byte_info);
-    //printf("test_quit: %s", resp_msg);
-    int serv_sock;
-    if((serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        printf("Socket establish failed!\n");
-        return ;
-    }
-    // TODO manage_trans_fds
-    send_test(serv_sock, resp_msg);
+    char logout_info[100];
+    sprintf(logout_info, "You have transferred %d bytes in %d files.", clients[idx].bytes_num, clients[idx].transfers_num);
+    int tr_sock = clients[idx].transfer_serve_sock;
+    send_response(clnt_sock, 221, logout_info);
+    close(tr_sock);
+    close_fd(idx);
 }
 
 void ABOR(char *param, int idx) {
-    int serve_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(param != NULL) {
-        send_response(serve_sock, 504, NULL);
-        return ;
-    }
-    send_response(serve_sock, 226, NULL);
+    int clnt_sock = clients[idx].connect_serve_sock;
+    if (param != NULL) {
+        send_response(clnt_sock, 504, NULL);
+        return;
+    }   
+    if (clients[idx].transfer_serve_sock != -1) {
+        int tr_sock = clients[idx].transfer_serve_sock;
+        if (tr_sock != -1) {
+            close(tr_sock);
+            clients[idx].transfer_serve_sock = -1;
+            clients[idx].state = LOG_IN;
+            clients[idx].mode = NO_CONNECTION;
+            clients[idx].offset = 0;
+            FD_CLR(tr_sock, &handle_set);
+        }
+        send_response(clnt_sock, 426, NULL);
+    } 
+    send_response(clnt_sock, 226, NULL);
 }
 
 void cmd_handler(char *cmd, char *param, int idx) {
@@ -258,4 +258,5 @@ void cmd_handler(char *cmd, char *param, int idx) {
     if (strcmp(cmd, "SYST") == 0) SYST(param, idx);
     if (strcmp(cmd, "TYPE") == 0) TYPE(param, idx);
     if (strcmp(cmd, "QUIT") == 0) QUIT(param, idx);
+    if (strcmp(cmd, "ABOR") == 0) ABOR(param, idx);
 }

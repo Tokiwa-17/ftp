@@ -62,6 +62,12 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
         case 220:
             sprintf(resp_final, "%d %s\r\n", code, "Hello.");
             break; 
+        case 221:
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
+            break;
+        case 226:
+            sprintf(resp_final, "%d %s\r\n", code, "FTP service completed.");
+            break;
         case 227:
             sprintf(resp_final, "%d %s\r\n", code, resp_msg);
             break;
@@ -73,6 +79,9 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
             break;
         case 425:
             sprintf(resp_final, "%d %s\r\n", code, "No TCP connection was established.");
+            break;
+        case 426:
+            sprintf(resp_final, "%d %s\r\n", code, "FTP service is continuing.");
             break;
         case 500:
             sprintf(resp_final, "%d %s\r\n", code, "No command.");
@@ -152,7 +161,7 @@ int recv_from_client(int clnt_sock, int idx) {
 int transfer(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int mode = clients[idx].mode;
-    printf("MODE: %d\n", mode);
+    //printf("MODE: %d\n", mode);
     if (mode == NO_CONNECTION) {
         send_response(clnt_sock, 425, NULL);
         return 0;
