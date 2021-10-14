@@ -98,11 +98,42 @@ class Client():
         self.recv_msg()
         if self.code != 200:
             return False
-        print(port)
+        #print(port)
         self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.data_socket.bind((self.localIP, port))
         self.data_socket.listen(5)
         return True
+
+    def retr(self):
+        pass
+
+    def stor(self):
+        pass
+
+    def mkd(self, folder_name):
+        self.send_msg('MKD ' + folder_name)
+        self.recv_msg()
+
+    def rmd(self, folder_name):
+        self.send_msg('RMD ' + folder_name)
+        self.recv_msg()
+
+    def rnfr(self, folder_name):
+        self.send_msg('RNFR ' + folder_name)
+        self.recv_msg()
+
+    def rnto(self, folder_name):
+        self.send_msg('RNTO ' + folder_name)
+        self.recv_msg()
+
+    def cwd(self, path):
+        self.send_msg('CWD ' + path)
+        self.recv_msg()
+
+    def pwd(self):
+        self.send_msg('PWD ')
+        print(self.recv_msg())
+
 
 
 
