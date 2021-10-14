@@ -66,7 +66,7 @@ class FTPClient(QMainWindow):
         """
         TEST
         """
-        self.client.port()
+        self.client.pwd()
         """
         TEST
         """
