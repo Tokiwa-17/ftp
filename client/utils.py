@@ -1,96 +1,40 @@
 import socket
 import sys
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+import time
 
-def login():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
+class DownloadHandler(QThread):
+    progress_bar_signal = pyqtSignal(str)
+    complete_signal = pyqtSignal()
 
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    # 1. respond with an initial message
-    s.recv(1024)
-    # 2. client to send a “USER anonymous” command.
-    str = 'USER anonymous\0'
-    s.send(str.encode())
-    # 3. ask for an email address as a password
-    s.recv(1024)
-    email = input("Please input an email address for logging in: ") + '\0'
-    s.send(email.encode())
-    # 4. rcv greetings
-    s.recv(1024).decode("utf-8", "ignore")
+    def __init__(self, ftp, size, offset, path):
+        super().__init__()
+        self.ftp = ftp
+        self.size = size
+        self.offset = offset
+        self.path = path
 
-    s.close()
+    def run(self):
+        if self.offset == 0:
+            mode = 'wb'
+        else:
+            mode = 'ab'
+        try:
+            with open(self.path, mode) as f:
+                while True:
+                    data_stream = self.ftp.data_socket.recv(4096)
+                    time.sleep(0.01)
+                    if not data_stream:
+                        break
+                    self.offset += len(data_stream)
+                    print(f'offset: {self.offset}')
+                    self.progress_bar_signal.emit(str(self.offset))
+                    f.write(data_stream)
+        except:
+            pass
 
-def port():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(15)
-    print("success!")
-
-def pasv():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(50)
-    print("PASV success!")
-
-def syst():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(50)
-    print("SYST success!")
-
-def type():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(50)
-    print("TYPE success!")
-
-def quit():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(100)
-    print("QUIT success!")
-
-def abor():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 1234))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(100)
-    print("ABOR success!")
-
-def retr():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.44.133', 21))
-    except socket.error as msg:
-        print(msg)
-        print(sys.exit(1))
-    s.recv(100)
-    print("RETR success!")
-
+        self.ftp.recv_msg()
+        self.complete_signal.emit()
+        self.exit()

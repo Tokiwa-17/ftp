@@ -1,10 +1,12 @@
 import socket
 import sys
+import os
 import random
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from login import Ui_login
 from cmd import Ui_cmd
+from utils import *
 
 def get_local_IP():
     try:
@@ -30,12 +32,14 @@ class Client():
     def __init__(self):
         super().__init__()
         self.host = None
-        self.mode = None
+        self.mode = 'PASV'
         self.code = None
         self.socket = None
         self.data_socket = None
         self.data_address = None
         self.localIP = get_local_IP()
+        self.download_thread = None
+        self.upload_thread = None
 
 
     def send_msg(self, cmd):
@@ -77,6 +81,9 @@ class Client():
         self.send_msg('ABOR')
         self.recv_msg()
 
+    """
+    请求服务器DTP在一个数据端口上监听并等待连接而不是收到传输命令后主动发起连接
+    """
     def pasv(self):
         self.send_msg("PASV")
         resp_msg = self.recv_msg()
@@ -87,9 +94,12 @@ class Client():
         self.data_address = self.data_address.split(',')
         ip_address = '.'.join(self.data_address[0:4])
         port = int(self.data_address[-2]) * 256 + int(self.data_address[-1])
-        self.data_address = ip_address + ' ' + str(port)
+        self.data_address = ip_address, port
         return True
 
+    """
+    这个参数用来指定数据连接时的主机数据端口
+    """
     def port(self):
         port = get_aval_port(self.localIP)
         port_cmd = 'PORT ' + self.localIP.replace('.', ',') + ',' + \
@@ -104,11 +114,61 @@ class Client():
         self.data_socket.listen(5)
         return True
 
-    def retr(self):
-        pass
+    """
+    server -> client
+        * src_path: file in server
+        * dest_path: 
+    """
+    def retr(self, src_path, dest_path, filesize, offset, progress_bar):
+        self.send_msg('RETR ' + src_path)
+        if self.mode == 'PASV':
+            self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                #print(self.data_address)
+                self.data_socket.connect(self.data_address)
+            except:
+                print('PASV Error')
+                return
+        else:
+            try:
+                new_socket, _ = self.data_socket.accept()
+                self.data_socket.close()
+                self.data_socket = new_socket
+            except Exception as e:
+                return
+        self.recv_msg()
+        if self.code != 150:
+            self.data_socket.close()
+            return
 
-    def stor(self):
-        pass
+        def update_progress_bar(progress):
+            progress_bar.setValue(int(progress) * 100 / filesize)
+        self.download_thread = DownloadHandler(self, filesize, offset, dest_path)
+        self.download_thread.progress_bar_signal.connect(update_progress_bar)
+        self.download_thread.run()
+
+    """
+    服务器DTP接收经过数据连接传送的数据并将这些数据存储为服务器端的一个文件
+    """
+    def stor(self, src_path, dest_path):
+        self.send_msg('STOR ' + dest_path)
+        if self.mode == 'PASV':
+            self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self.data_socket.connect(self.data_address)
+            except:
+                return
+
+        else:
+            try:
+                new_socket, _ = self.data_socket.accept()
+                self.data_socket.close()
+                self.data_socket = new_socket
+            except:
+                return
+        self.recv_msg()
+
+
 
     def mkd(self, folder_name):
         self.send_msg('MKD ' + folder_name)
@@ -134,6 +194,28 @@ class Client():
         self.send_msg('PWD ')
         print(self.recv_msg())
 
+    def rest(self, offset):
+        self.send_msg('REST ' + str(offset))
+        self.recv_msg()
+
+
+    def download_file(self, src_path, dest_path, filesize, offset, progress_bar):
+        """
+        dest_path: 下载文件的目标地址
+        """
+        if self.mode == 'PASV':
+            if not self.pasv():
+                QMessageBox.information(None, 'Error', 'PASV error', QMessageBox.Yes)
+                return
+        else:
+            if not self.port():
+                QMessageBox.information(None, 'Error', 'PORT error.', QMessageBox.Yes)
+                return
+        if offset:
+            self.rest(offset)
+
+        path = os.path.join(dest_path, os.path.basename(src_path))
+        self.retr(src_path, path, filesize, offset, progress_bar)
 
 
 

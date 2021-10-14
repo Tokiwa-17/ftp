@@ -53,6 +53,13 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3"/>
     </item>
+    <item>
+     <widget class="QProgressBar" name="download_progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
