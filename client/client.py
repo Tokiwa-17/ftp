@@ -148,9 +148,11 @@ class Client():
         self.download_thread.run()
 
     """
-    服务器DTP接收经过数据连接传送的数据并将这些数据存储为服务器端的一个文件
+    server接收数据
+    src -> dest
     """
-    def stor(self, src_path, dest_path):
+    def stor(self, src_path, dest_path, progress_bar, offset):
+        filesize = os.path.getsize(src_path)
         self.send_msg('STOR ' + dest_path)
         if self.mode == 'PASV':
             self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -168,6 +170,12 @@ class Client():
                 return
         self.recv_msg()
 
+        def update_progress_bar(progress):
+            progress_bar.setValue(int(progress) * 100 / filesize)
+
+        self.upload_thread = UploadHandler(self, filesize, offset, src_path)
+        self.upload_thread.progress_bar_signal.connect(update_progress_bar)
+        self.upload_thread.run()
 
 
     def mkd(self, folder_name):

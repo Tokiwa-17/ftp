@@ -38,3 +38,35 @@ class DownloadHandler(QThread):
         self.ftp.recv_msg()
         self.complete_signal.emit()
         self.exit()
+
+class UploadHandler(QThread):
+    progress_bar_signal = pyqtSignal(str)
+    complete_signal = pyqtSignal()
+
+    def __init__(self, ftp, size, offset, path):
+        super().__init__()
+        self.ftp = ftp
+        self.size = size
+        self.offset = offset
+        self.path = path
+
+    def run(self):
+        try:
+            progress = self.offset
+            with open(self.path, 'rb') as f:
+                f.seek(self.offset)
+                while True:
+                    data = f.read(4096)
+                    if not data:
+                        break
+                    if self.ftp.data_socket.send(data) <= 0:
+                        break
+                    progress += len(data)
+                    time.sleep(0.01)
+                    self.progress_bar_signal.emit(str(progress))
+            self.ftp.data_socket.close()
+            self.ftp.recv_msg()
+        except:
+            self.ftp.recv_msg()
+        self.complete_signal.emit()
+        self.exit()
