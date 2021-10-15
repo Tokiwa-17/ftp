@@ -68,7 +68,8 @@ class FTPClient(QMainWindow):
         """
         self.client.pasv()
 
-        self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
+        # self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
+        self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
         """
         TEST
         """
