@@ -1,7 +1,7 @@
 import socket
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QTreeWidget
 from login import Ui_login
 from cmd import Ui_cmd
 from client import Client
@@ -45,11 +45,13 @@ class FTPClient(QMainWindow):
         try:
             self.client.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client.socket.connect((self.login.login_window.ip_lineEdit.text(), int(self.login.login_window.port_lineEdit.text())))
-            print('socket establish success!')
+            #print('socket establish success!')
+            self.client.recv_msg()
         except socket.error as msg:
             print(msg)
             print(sys.exit(1))
-
+        if self.client.code != 220:
+            return False
         user_cmd = "USER anonymous"
         self.client.send_msg(user_cmd)
         self.client.recv_msg()
@@ -66,10 +68,11 @@ class FTPClient(QMainWindow):
         """
         TEST
         """
-        self.client.pasv()
-
-        # self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
-        self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
+        self.client.port()
+        self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
+        # self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
+        #print(self.client.list(None))
+        #self.display_list()
         """
         TEST
         """
@@ -90,3 +93,26 @@ class FTPClient(QMainWindow):
 
     def rmdir(self):
         pass
+
+    def display_list(self):
+        root = self.cmd.cmd_window.file_list_treeWidget
+        file_list = self.client.list(None)
+        if file_list is None:
+            self.client.mode == 'PASV'
+            self.cmd.cmd_window.PASV_radioButton.setChecked(True)
+            self.cmd.cmd_window.PORT_radioButton.setChecked(False)
+            file_list = self.client.list(None)
+        # TODO
+
+        if file_list == '' or file_list is None:
+            return []
+
+        file_list = file_list.split('\n')[:-1]
+        items = []
+        for file in file_list:
+            item = QTreeWidgetItem(root)
+            item.setText(0, file)
+            #root.addChild(item)
+            items.append(item)
+        return items
+
