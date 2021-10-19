@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 
 extern int max_serve_sock;
 extern fd_set handle_set;
@@ -77,4 +79,39 @@ void update_trans_sock(int tr_sock, int idx) {
     clients[idx].transfer_serve_sock = tr_sock;
     FD_SET(tr_sock, &handle_set);
     max_serve_sock = max(tr_sock, max_serve_sock);
+}
+
+int get_local_IPaddr() {
+    int i = 0, sockfd;
+    char buf[1024] = {0};
+
+    struct ifreq *ifr;
+    struct ifconf ifc;
+    ifc.ifc_len = 1024;
+    ifc.ifc_buf = buf;
+    if((sockfd = socket(AF_INET, SOCK_DGRAM,0))<0) {
+	    printf("socket error\n");
+		return 0;
+	}
+    ioctl(sockfd, SIOCGIFCONF, &ifc);
+    ifr = (struct ifreq*) buf;
+    for(i=(ifc.ifc_len/sizeof(struct ifreq)); i > 0; i--) {
+		//printf("net name: %s\n",ifr->ifr_name);
+		inet_ntop(AF_INET,&((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr, LOCAL_IP,20);
+		//printf("ip: %s \n",LOCAL_IP);
+		ifr = ifr +1;
+	}
+	return 1;
+}
+
+void close_transfer_fd(int idx) {
+    int clnt_sock = clients[idx].transfer_serve_sock;
+    if (clnt_sock != -1) {
+        close(clnt_sock);
+        clients[idx].transfer_serve_sock = -1;
+        clients[idx].state = LOG_IN;
+        clients[idx].mode = NO_CONNECTION;
+        clients[idx].offset = 0;
+        FD_CLR(clnt_sock, &handle_set);
+    }
 }

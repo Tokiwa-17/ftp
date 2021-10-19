@@ -61,7 +61,7 @@ void send_response(int clnt_sock, int code, char *resp_msg) {
             sprintf(resp_final, "%d %s\r\n", code, "UNIX Type: L8");
             break;
         case 220:
-            sprintf(resp_final, "%d %s\r\n", code, "Hello.");
+            sprintf(resp_final, "%d %s\r\n", code, resp_msg);
             break; 
         case 221:
             sprintf(resp_final, "%d %s\r\n", code, resp_msg);
@@ -162,11 +162,11 @@ int recv_from_client(int clnt_sock, int idx) {
 int transfer(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int mode = clients[idx].mode;
-    //printf("MODE: %d\n", mode);
+    //printf("transfer_MODE: %d\n", mode);
     if (mode == NO_CONNECTION) {
         send_response(clnt_sock, 425, NULL);
         return 0;
-    } else if (mode == READY) {
+    } else if (mode == READY) {;
         clients[idx].mode = PORT_MODE;
         int tr_sock = clients[idx].transfer_serve_sock;
         struct sockaddr_in addr = clients[idx].addr;
@@ -180,10 +180,122 @@ int transfer(char *param, int idx) {
         clients[idx].mode = PASV_MODE;
         send_response(clnt_sock, 150, NULL);
     }
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    else {
-        send_response(clnt_sock, 150, NULL);
-    }
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     return 1;
+}
+
+int safe_recv(int fd, char *buf, int len) {
+    int recv_total = 0, recv_cnt;
+    while(1) {
+        recv_cnt = read(fd, buf + recv_total, len - recv_total);
+        if (recv_cnt < 0) return -1;
+        else if(recv_cnt == 0) break;
+        else recv_total += recv_cnt;
+    }
+    printf("recv_total: %d\n", recv_total);
+    return recv_total;
+}
+
+void upload(int idx) { 
+    if (clients[idx].state != TRANSFER) return;
+    int code = 226;
+    FILE *f;
+    int nbytes;
+    char buffer[BUFSIZE];
+    memset(&buffer, 0, BUFSIZE);
+    char *filename = clients[idx].filename;
+    if (clients[idx].offset == 0) f = fopen(filename, "wb");
+    else f = fopen(filename, "rb+");
+    if (f == NULL) {
+        printf("file open failed.\n");
+        code = 550;
+    }
+    else {
+        fseek(f, clients[idx].offset, SEEK_SET);
+        if ((nbytes = safe_recv(clients[idx].transfer_serve_sock, buffer, BUFSIZE)) > 0) {
+            printf("nbytes: %d\n", nbytes);
+            if (fwrite(buffer, 1, nbytes, f) < nbytes) {
+                //printf("Error fwrite(): %s(%d)\n", strerror(errno), errno);
+                fflush(f);
+                code = 451;
+            } else {
+                clients[idx].offset += nbytes;
+                clients[idx].bytes_num += nbytes;
+                fclose(f);
+                return;
+            }        
+        }
+        else if (nbytes < 0) code = 426;
+        fclose(f);
+    }
+    close_transfer_fd(idx);
+    send_response(clients[idx].connect_serve_sock, code, NULL);
+}
+
+int safe_send(int fd, char *buf, int len) {
+    // fd, 地址指针，实际长度
+    int write_in_total = 0, write_cnt;
+    while(write_in_total < len) {
+        //printf("write_in_total: %d\n", write_in_total);
+        //printf("len: %d\n", len);
+        write_cnt = write(fd, buf + write_in_total, len - write_in_total);
+        //printf("write_cnt: %d\n", write_cnt);
+        if(write_cnt < 0) return 0;
+        else if (write_cnt == 0) {
+            //write(fd, );
+            break;
+        }
+        else write_in_total += write_cnt;
+    }
+    return 1;
+}
+
+void download(int idx) {
+    if(clients[idx].state != TRANSFER)  return;
+    int code = 226;
+    FILE *f;
+    int nbytes;
+    char buf[BUFSIZE];
+    memset(&buf, 0, BUFSIZE);
+    char *filename = clients[idx].filename;
+    if ((f = fopen(filename, "rb")) == NULL)    code = 451;
+    else {
+        fseek(f, clients[idx].offset, SEEK_SET);
+        if ((nbytes = fread(buf, 1, BUFSIZE, f)) > 0) {
+            printf("nbytes: %d\n", nbytes);
+            if (!safe_send(clients[idx].transfer_serve_sock, buf, nbytes)){
+                code = 426;
+            }
+            else {
+                clients[idx].bytes_num += nbytes;
+                clients[idx].offset += nbytes;
+                fclose(f);
+                return;
+            }
+        }
+        fclose(f);
+    }
+    close_transfer_fd(idx);
+    send_response(clients[idx].connect_serve_sock, code, NULL);
+}
+
+void resp_list(int idx, char *dest) { 
+    int clnt_sock = clients[idx].connect_serve_sock;
+    int trans_sockt = clients[idx].transfer_serve_sock;
+    char list_buf[4096], shell_cmd[256];
+    sprintf(shell_cmd, "ls -l %s", dest);
+    FILE *f = popen(shell_cmd, "r");
+    if (f != NULL) {
+        while(fread(list_buf, 1, 1, f)) 
+            if (list_buf[0] == '\n') break;
+        // dicard the first line
+        while(1) {
+            int bytes_num = fread(list_buf, 1, 4096, f);
+            if (bytes_num == 0) break;
+            else list_buf[bytes_num] = '\0';
+            safe_send(trans_sockt, list_buf, strlen(list_buf));
+        }
+        pclose(f);
+    }
+    close_transfer_fd(idx);
+    send_response(clnt_sock, 226, NULL);
 }

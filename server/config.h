@@ -1,5 +1,7 @@
 #pragma once
 #define MAX_CLIENTS 10
+#define BUFSIZE 8000
+
 #define NOT_LOG_IN 0
 #define LOGGING 1 
 #define LOG_IN 2
