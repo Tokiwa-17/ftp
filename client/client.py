@@ -40,6 +40,7 @@ class Client():
         self.localIP = get_local_IP()
         self.download_thread = None
         self.upload_thread = None
+        self.prefix = None
 
 
     def send_msg(self, cmd):
@@ -101,6 +102,7 @@ class Client():
     这个参数用来指定数据连接时的主机数据端口
     """
     def port(self):
+        self.mode = 'PORT'
         port = get_aval_port(self.localIP)
         port_cmd = 'PORT ' + self.localIP.replace('.', ',') + ',' + \
             str(port // 256) + ',' + str(port % 256)
@@ -200,7 +202,8 @@ class Client():
 
     def pwd(self):
         self.send_msg('PWD ')
-        print(self.recv_msg())
+        msg = self.recv_msg()
+        self.prefix = msg.split(' ')[1].strip()[1:-1]
 
     def rest(self, offset):
         self.send_msg('REST ' + str(offset))
@@ -224,6 +227,49 @@ class Client():
 
         path = os.path.join(dest_path, os.path.basename(src_path))
         self.retr(src_path, path, filesize, offset, progress_bar)
+
+    """
+    LIST命令传送指定目录下的文件列表
+    """
+    def list(self, dest_path):
+        if self.mode == 'PASV':
+            if not self.pasv():
+                QMessageBox.information(None, 'Error', 'PASV error.', QMessageBox.Yes)
+                return None
+        else:
+            if not self.port():
+                QMessageBox.information(None, 'Error', 'PORT error', QMessageBox.Yes)
+                return None
+        if dest_path:
+            self.send_msg('LIST ' + dest_path)
+        else:
+            self.send_msg('LIST')
+
+        if self.mode == 'PASV':
+            self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self.data_socket.connect(self.data_address)
+            except:
+                return None
+
+        else:
+            try:
+                new_socket, _ = self.data_socket.accept()
+                self.data_socket.close()
+                self.data_socket = new_socket
+            except:
+                return None
+        self.recv_msg()
+
+        list = ''
+        while True:
+            data = self.data_socket.recv(4096).decode()
+            list += data
+            if not data:
+                break
+        self.recv_msg()
+        self.data_socket.close()
+        return list
 
 
 

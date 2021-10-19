@@ -25,16 +25,17 @@ class DownloadHandler(QThread):
             with open(self.path, mode) as f:
                 while True:
                     data_stream = self.ftp.data_socket.recv(4096)
-                    time.sleep(0.01)
+                    #print(f'len: {len(data_stream)}')
+                    #time.sleep(0.01)
                     if not data_stream:
+                        #print(f'data_stream: {data_stream}')
                         break
                     self.offset += len(data_stream)
-                    print(f'offset: {self.offset}')
+                    #print(f'offset: {self.offset}')
                     self.progress_bar_signal.emit(str(self.offset))
                     f.write(data_stream)
         except:
             pass
-
         self.ftp.recv_msg()
         self.complete_signal.emit()
         self.exit()
