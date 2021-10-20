@@ -44,6 +44,7 @@ void PASS(char *param, int idx) {
 }
 
 void PORT(char *param, int idx) {
+    printf("Param :%s\n", param);
     int clnt_sock = clients[idx].connect_serve_sock;
     int state = clients[idx].state;
     int tr_sock = clients[idx].transfer_serve_sock;
@@ -53,7 +54,6 @@ void PORT(char *param, int idx) {
     }
     int h1, h2, h3, h4, p1, p2;
     int cnt = sscanf(param, "%d,%d,%d,%d,%d,%d", &h1, &h2, &h3, &h4, &p1, &p2);
-    //printf("%d\n", cnt);
     if (cnt != 6) {
         send_response(clnt_sock, 501, NULL);
         return;
@@ -331,8 +331,17 @@ void LIST_(char *param, int idx) {
         char path[200];
         get_absolute_path(clients[idx].url_prefix, param, path);
         int len = strlen(ROOT);
-        if(ROOT[len - 1] == '/')   sprintf(path, "%s%s", ROOT, clients[idx].filename);
-        else sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        //if(ROOT[len - 1] == '/')   sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        //else sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        if(ROOT[len - 1] == '/') {
+            if (path[0] == '/') sprintf(clients[idx].filename, "%s%s", ROOT, path + 1);
+            else sprintf(clients[idx].filename, "%s%s", ROOT, path);
+        } else {
+            if (path[0] == '/') sprintf(clients[idx].filename, "%s%s", ROOT, path);
+            else sprintf(clients[idx].filename, "%s/%s", ROOT, path);
+        }
+        printf("ROOT: %s\n", ROOT);
+        printf("param: %s\n", param);
         printf("filename: %s\n", clients[idx].filename);
         if (!check_file(clients[idx].filename) && !check_folder(clients[idx].filename)) {
             send_response(clnt_sock, 451, NULL);
