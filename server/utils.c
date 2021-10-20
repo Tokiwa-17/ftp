@@ -191,7 +191,7 @@ int safe_recv(int fd, char *buf, int len) {
         else if(recv_cnt == 0) break;
         else recv_total += recv_cnt;
     }
-    printf("recv_total: %d\n", recv_total);
+    //printf("recv_total: %d\n", recv_total);
     return recv_total;
 }
 
@@ -212,7 +212,7 @@ void upload(int idx) {
     else {
         fseek(f, clients[idx].offset, SEEK_SET);
         if ((nbytes = safe_recv(clients[idx].transfer_serve_sock, buffer, BUFSIZE)) > 0) {
-            printf("nbytes: %d\n", nbytes);
+            //printf("nbytes: %d\n", nbytes);
             if (fwrite(buffer, 1, nbytes, f) < nbytes) {
                 //printf("Error fwrite(): %s(%d)\n", strerror(errno), errno);
                 fflush(f);
@@ -279,6 +279,7 @@ void download(int idx) {
 }
 
 void resp_list(int idx, char *dest) { 
+    //printf("dest: %s\n", dest);
     int clnt_sock = clients[idx].connect_serve_sock;
     int trans_sockt = clients[idx].transfer_serve_sock;
     char list_buf[4096], shell_cmd[256];

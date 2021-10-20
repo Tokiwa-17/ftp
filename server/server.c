@@ -98,10 +98,7 @@ int main(){
                         clients[i].mode = READY;
                         clients[i].state = TRANSFER;
                 }
-                if (mode == PORT_MODE) {
-                    clients[i].mode = READY;
-                    //mode = clients[i].mode;
-                }
+                if (mode == PORT_MODE)  clients[i].mode = READY;
                 if (mode == READY) {
                     // upload：上传到server
                     printf("MODE:%d\n", mode);

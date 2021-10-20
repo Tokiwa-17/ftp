@@ -238,7 +238,7 @@ void QUIT(char *param, int idx) {
     sprintf(logout_info, "You have transferred %d bytes in %d files.", clients[idx].bytes_num, clients[idx].transfers_num);
     int tr_sock = clients[idx].transfer_serve_sock;
     send_response(clnt_sock, 221, logout_info);
-    close(tr_sock);
+    close_transfer_fd(idx);
     close_fd(idx);
 }
 
@@ -250,15 +250,13 @@ void ABOR(char *param, int idx) {
     }   
     if (clients[idx].transfer_serve_sock != -1) {
         int tr_sock = clients[idx].transfer_serve_sock;
-        if (tr_sock != -1) {
-            close(tr_sock);
-            clients[idx].transfer_serve_sock = -1;
-            clients[idx].state = LOG_IN;
-            clients[idx].mode = NO_CONNECTION;
-            clients[idx].offset = 0;
-            FD_CLR(tr_sock, &handle_set);
-        }
-        send_response(clnt_sock, 426, NULL);
+        close(tr_sock);
+        clients[idx].transfer_serve_sock = -1;
+        clients[idx].state = LOG_IN;
+        clients[idx].mode = NO_CONNECTION;
+        clients[idx].offset = 0;
+        FD_CLR(tr_sock, &handle_set);
+        //send_response(clnt_sock, 426, NULL);
     } 
     send_response(clnt_sock, 226, NULL);
 }
@@ -294,10 +292,18 @@ void CWD(char *param, int idx) {
     // url_prefix/param -> path
     printf("%s\n", path);
     int len = strlen(ROOT);
-    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    else sprintf(absolute_path, "%s%s", ROOT, path);
+    if(ROOT[len - 1] == '/')   {
+        if(path[0]=='/')
+            sprintf(absolute_path, "%s%s", ROOT, path + 1);
+        else sprintf(absolute_path, "%s%s", ROOT, path);
+    }
+    else {
+        if(path[0]=='/')
+            sprintf(absolute_path, "%s%s", ROOT, path);
+        else sprintf(absolute_path, "%s/%s", ROOT, path);
+    }
     // ROOT/path -> absolute_path
-    printf("%s\n", absolute_path);
+    printf("absolute_path: %s\n", absolute_path);
     if (check_folder(absolute_path)) {
         strcpy(clients[idx].url_prefix, path);
         // clients[idx].url_prefix记录没有ROOT的绝对路径
@@ -327,6 +333,7 @@ void LIST_(char *param, int idx) {
         int len = strlen(ROOT);
         if(ROOT[len - 1] == '/')   sprintf(path, "%s%s", ROOT, clients[idx].filename);
         else sprintf(path, "%s%s", ROOT, clients[idx].filename);
+        printf("filename: %s\n", clients[idx].filename);
         if (!check_file(clients[idx].filename) && !check_folder(clients[idx].filename)) {
             send_response(clnt_sock, 451, NULL);
             return;
@@ -335,6 +342,7 @@ void LIST_(char *param, int idx) {
             clients[idx].rw_state = LIST;
         }
     } else {
+            strcpy(clients[idx].filename, "/tmp");
             if(!transfer(clients[idx].filename, idx)) return;
             clients[idx].rw_state = LIST;
     }
@@ -365,8 +373,16 @@ void RNFR(char *param, int idx) { // 重命名开始
     char path[200], absolute_path[200];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
-    if(ROOT[len - 1] == '/') sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    else sprintf(absolute_path, "%s%s", ROOT, path);
+    if(ROOT[len - 1] == '/') {
+        if(path[0] == '/')
+            sprintf(absolute_path, "%s%s", ROOT, path + 1);
+        else sprintf(absolute_path, "%s%s", ROOT, path);
+    }
+    else {
+        if(path[0] == '/')
+            sprintf(absolute_path, "%s%s", ROOT, path);
+        else sprintf(absolute_path, "%s/%s", ROOT, path);
+    }
     //printf("ABS_PATH: %s\n", absolute_path);
     if(check_file(absolute_path)) {
         clients[idx].state = RNFR_CMP;
@@ -390,9 +406,18 @@ void RNTO(char *param, int idx) { // 重命名结束
     char path[200], absolute_path[200], cmd[400];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
-    if(ROOT[len - 1] == '/') sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    else sprintf(absolute_path, "%s%s", ROOT, path);
+    if(ROOT[len - 1] == '/') {
+        if(path[0] == '/')
+            sprintf(absolute_path, "%s%s", ROOT, path + 1);
+        else sprintf(absolute_path, "%s%s", ROOT, path);
+    }
+    else {
+        if(path[0] == '/')
+            sprintf(absolute_path, "%s%s", ROOT, path);
+        else sprintf(absolute_path, "%s/%s", ROOT, path);
+    }
     sprintf(cmd, "mv %s %s", clients[idx].rename_file, absolute_path);
+    // mv src dest
     if(system(cmd) == -1) {
         send_response(clnt_sock, 550, NULL);
         return;

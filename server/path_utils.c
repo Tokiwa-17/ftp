@@ -40,6 +40,7 @@ stat结构体:https://www.cnblogs.com/yaowen/p/4801541.html
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 int check_folder(char *path) {
     struct stat file;
+    if (!S_ISDIR(file.st_mode)) printf("yes\n");
     if (access(path, F_OK) != 0 || stat(path, &file) != 0 || !S_ISDIR(file.st_mode))
         return 0; 
     return 1;
