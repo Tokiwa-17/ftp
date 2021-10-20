@@ -204,6 +204,7 @@ class Client():
         self.send_msg('PWD ')
         msg = self.recv_msg()
         self.prefix = msg.split(' ')[1].strip()[1:-1]
+        print(self.prefix)
 
     def rest(self, offset):
         self.send_msg('REST ' + str(offset))
