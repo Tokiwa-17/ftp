@@ -267,7 +267,6 @@ class Client():
             except:
                 return None
         self.recv_msg()
-
         list = ''
         while True:
             data = self.data_socket.recv(4096).decode()

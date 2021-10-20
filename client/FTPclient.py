@@ -1,8 +1,10 @@
 import socket
 import sys
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QTreeWidget
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QTreeWidget, QDirModel, QFileSystemModel
 from login import Ui_login
+from PyQt5.QtCore import QDir
 from cmd import Ui_cmd
 from client import Client
 from window import Ui_window
@@ -52,8 +54,16 @@ class FTPClient(QMainWindow):
         self.window.cmd_window.radioButton_port.clicked.connect(self.port_mode)
         self.window.cmd_window.radioButton_pasv.clicked.connect(self.pasv_mode)
         self.window.cmd_window.pushButton_connect.clicked.connect(self.new_connection)
-        self.window.cmd_window.lineEdit_local_site.setText('/')
+        self.local_path = os.getcwd()
+        self.window.cmd_window.lineEdit_local_site.setText(self.local_path)
         self.window.cmd_window.lineEdit_remote_site.setText('/tmp')
+        self.window.cmd_window.pushButton_local_site.clicked.connect(self.show_local_dir)
+        self.window.cmd_window.pushButton_remote_site.clicked.connect(self.show_remote_dir)
+        self.window.cmd_window.treeWidget_local_site.setColumnCount(4)
+        self.window.cmd_window.treeWidget_local_site.setHeaderLabels(['Last modified', 'Type', 'Size', 'Name'])
+        self.window.cmd_window.treeWidget_remote_site.setColumnCount(4)
+        self.window.cmd_window.treeWidget_remote_site.setHeaderLabels(['Last modified', 'Type', 'Size', 'Name'])
+        self.show_local_dir()
 
     def Login(self):
         try:
@@ -123,7 +133,52 @@ class FTPClient(QMainWindow):
                 QMessageBox.information(self, "connection", "连接成功")
             else:
                 QMessageBox.information(self, "connection", "连接失败")
+        self.show_remote_dir()
 
+    def show_local_dir(self):
+        path = self.window.cmd_window.lineEdit_local_site.text()
+        #print(path)
+        self.window.cmd_window.treeWidget_local_site.clear()
+        if not os.system('cd ' + path):
+            #dir = os.system('dir ' + path)
+            dir = os.popen('dir ' + path)
+            dir = dir.readlines()[7:-2]
+            dir = [file[:-1] for file in dir]
+            self.local_path = path
+        else:
+            dir = None
+        if dir:
+            #print(dir)
+            for file in dir:
+                file_info = file.split()
+                if file_info[2] == '<DIR>':
+                    item = QTreeWidgetItem([file_info[0] + ' ' + file_info[1], 'DIR', '/', file_info[-1]])
+                    self.window.cmd_window.treeWidget_local_site.addTopLevelItem(item)
+                else:
+                    item = QTreeWidgetItem([file_info[0] + ' ' + file_info[1], 'file', file_info[2], file_info[-1]])
+                    self.window.cmd_window.treeWidget_local_site.addTopLevelItem(item)
+
+
+    def show_remote_dir(self, dir=None):
+        path = self.window.cmd_window.lineEdit_remote_site.text()
+        self.window.cmd_window.treeWidget_remote_site.clear()
+        if path[0:4] == '/tmp':
+            path = path[4:]
+        file_list = self.client.list(path)
+        #print(f'file_list: {file_list}')
+        if file_list is None:
+            self.cmd.cmd_window.PASV_radioButton.setChecked(True)
+            self.client.pasv()
+            file_list = self.client.list(None)
+        file_list = file_list.split('\n')[:-1]
+        for file in file_list:
+            file = file.split()
+            if file[4] == '0':
+                item = QTreeWidgetItem([file[5][:2] + '/' + file[6] + ' ' + file[7], 'DIR', '/', file[-1]])
+                self.window.cmd_window.treeWidget_remote_site.addTopLevelItem(item)
+            else:
+                item = QTreeWidgetItem([file[5][:2] + '/' + file[6] + ' ' + file[7], 'file', file[4], file[-1]])
+                self.window.cmd_window.treeWidget_remote_site.addTopLevelItem(item)
 
 
     def mkdir(self):
