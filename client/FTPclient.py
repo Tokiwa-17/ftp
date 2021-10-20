@@ -68,11 +68,15 @@ class FTPClient(QMainWindow):
         """
         TEST
         """
-        self.client.port()
-        self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
-        # self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
+        #self.client.cwd('/test')
+        #self.client.rnfr('test.txt')
+        #self.client.rnto('tttt.txt')
+        #self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
+        #self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
         #print(self.client.list(None))
-        #self.display_list()
+        self.client.pasv()
+        self.display_list()
+        #self.client.pwd()
         """
         TEST
         """
@@ -94,9 +98,10 @@ class FTPClient(QMainWindow):
     def rmdir(self):
         pass
 
-    def display_list(self):
+    def display_list(self, dir=None):
         root = self.cmd.cmd_window.file_list_treeWidget
         file_list = self.client.list(None)
+        print(f'file_list: {file_list}')
         if file_list is None:
             self.client.mode == 'PASV'
             self.cmd.cmd_window.PASV_radioButton.setChecked(True)
