@@ -6,6 +6,7 @@ from cmd import Ui_cmd
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication
 from FTPclient import FTPClient
+from global_ import Global
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
