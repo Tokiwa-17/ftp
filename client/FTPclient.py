@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QTreeWidg
 from login import Ui_login
 from cmd import Ui_cmd
 from client import Client
+from window import Ui_window
+from global_ import Global
 
 class Login(Ui_login, QMainWindow):
     def __init__(self):
@@ -24,22 +26,34 @@ class Cmd(Ui_cmd, QMainWindow):
         self.cmd_window = Ui_cmd()
         self.cmd_window.setupUi(self)
 
+class Window(Ui_window, QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.cmd_window = Ui_window()
+        self.cmd_window.setupUi(self)
+
 
 class FTPClient(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.client = Client()
+        self.client = Client(self)
         self.user_status = 0 # login required
         self.login_status = False
         self.login = Login()
         self.login.login_window.login_pushButton.clicked.connect(self.Login)
         self.login.show()
         self.cmd = Cmd()
-        self.transfer_mode = 'PASV'
+        self.window = Window()
+        self.client.mode = 'PASV'
         self.cmd.cmd_window.PORT_radioButton.clicked.connect(self.port_mode)
         self.cmd.cmd_window.PASV_radioButton.clicked.connect(self.pasv_mode)
         self.cmd.cmd_window.mkdir_pushButton.clicked.connect(self.mkdir)
         self.cmd.cmd_window.rmdir_pushButton.clicked.connect(self.rmdir)
+        self.window.cmd_window.radioButton_port.clicked.connect(self.port_mode)
+        self.window.cmd_window.radioButton_pasv.clicked.connect(self.pasv_mode)
+        self.window.cmd_window.pushButton_connect.clicked.connect(self.new_connection)
+        self.window.cmd_window.lineEdit_local_site.setText('/')
+        self.window.cmd_window.lineEdit_remote_site.setText('/tmp')
 
     def Login(self):
         try:
@@ -47,6 +61,7 @@ class FTPClient(QMainWindow):
             self.client.socket.connect((self.login.login_window.ip_lineEdit.text(), int(self.login.login_window.port_lineEdit.text())))
             #print('socket establish success!')
             self.client.recv_msg()
+            #self.window.cmd_window.textEdit_cmd.append(self.client.recv_message)
         except socket.error as msg:
             print(msg)
             print(sys.exit(1))
@@ -55,16 +70,23 @@ class FTPClient(QMainWindow):
         user_cmd = "USER anonymous"
         self.client.send_msg(user_cmd)
         self.client.recv_msg()
+        #self.window.cmd_window.textEdit_cmd.append(self.client.recv_message)
         if self.client.code != 331:
             return False
         pass_cmd = "PASS " + self.login.login_window.password_lineEdit.text()
         self.client.send_msg(pass_cmd)
-        code = self.client.recv_msg()
+        self.client.recv_msg()
+        #self.window.cmd_window.textEdit_cmd.append(self.client.recv_message)
         if self.client.code != 230:
             return False
         self.login_status = True
         self.login.close()
-        self.cmd.show()
+        #self.cmd.show()
+        self.window.cmd_window.lineEdit_host.setText('127.0.0.1')
+        self.window.cmd_window.lineEdit_user.setText('anonymous')
+        self.window.cmd_window.lineEdit_port.setText('21')
+        self.window.cmd_window.radioButton_pasv.setChecked(True)
+        self.window.show()
         """
         TEST
         """
@@ -74,8 +96,7 @@ class FTPClient(QMainWindow):
         #self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
         #self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
         #print(self.client.list(None))
-        self.client.pasv()
-        self.display_list()
+        #self.display_list()
         #self.client.pwd()
         """
         TEST
@@ -83,14 +104,27 @@ class FTPClient(QMainWindow):
         return True
 
     def pasv_mode(self):
-        self.transfer_mode = 'PASV'
+        self.client.mode = 'PASV'
         self.cmd.cmd_window.PASV_radioButton.setChecked(True)
-        self.cmd.cmd_window.PORT_radioButton.setChecked(False)
 
     def port_mode(self):
-        self.transfer_mode = 'PORT'
-        self.cmd.cmd_window.PASV_radioButton.setChecked(False)
+        self.client.mode = 'PORT'
         self.cmd.cmd_window.PORT_radioButton.setChecked(True)
+
+    def new_connection(self):
+        print(f'mode: {self.client.mode}')
+        if self.client.mode == 'PASV':
+            if self.client.pasv():
+                QMessageBox.information(self, "connection", "连接成功")
+            else:
+                QMessageBox.information(self, "connection", "连接失败")
+        else:
+            if self.client.port():
+                QMessageBox.information(self, "connection", "连接成功")
+            else:
+                QMessageBox.information(self, "connection", "连接失败")
+
+
 
     def mkdir(self):
         pass

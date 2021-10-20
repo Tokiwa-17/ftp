@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox
 from login import Ui_login
 from cmd import Ui_cmd
 from utils import *
+from global_ import Global
 
 def get_local_IP():
     try:
@@ -29,7 +30,7 @@ def get_aval_port(ip):
         return port
 
 class Client():
-    def __init__(self):
+    def __init__(self, ftp):
         super().__init__()
         self.host = None
         self.mode = 'PASV'
@@ -41,6 +42,8 @@ class Client():
         self.download_thread = None
         self.upload_thread = None
         self.prefix = None
+        self.recv_message = None
+        self.ftp = ftp
 
 
     def send_msg(self, cmd):
@@ -55,6 +58,8 @@ class Client():
             resp = self.socket.recv(1024).decode()
             code_line = resp.split('\r\n')[-2]
             self.code = int(code_line.split(' ')[0])
+            self.recv_message = code_line
+            self.ftp.window.cmd_window.textEdit_cmd.append(code_line)
             return code_line
         except:
             pass
@@ -107,7 +112,8 @@ class Client():
         port_cmd = 'PORT ' + self.localIP.replace('.', ',') + ',' + \
             str(port // 256) + ',' + str(port % 256)
         self.send_msg(port_cmd)
-        self.recv_msg()
+        resp_msg = self.recv_msg()
+        print(resp_msg)
         if self.code != 200:
             return False
         #print(port)
