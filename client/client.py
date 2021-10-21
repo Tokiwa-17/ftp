@@ -95,7 +95,7 @@ class Client():
         resp_msg = self.recv_msg()
         if self.code != 227:
             return False
-        print(resp_msg)
+        #print(resp_msg)
         self.data_address = resp_msg.split('(')[1][0:-1]
         self.data_address = self.data_address.split(',')
         ip_address = '.'.join(self.data_address[0:4])
@@ -113,7 +113,7 @@ class Client():
             str(port // 256) + ',' + str(port % 256)
         self.send_msg(port_cmd)
         resp_msg = self.recv_msg()
-        print(resp_msg)
+        #print(resp_msg)
         if self.code != 200:
             return False
         #print(port)
@@ -129,6 +129,10 @@ class Client():
     """
     def retr(self, src_path, dest_path, filesize, offset, progress_bar):
         self.send_msg('RETR ' + src_path)
+        print(self.recv_msg())
+        if self.code != 150:
+            self.data_socket.close()
+            return
         if self.mode == 'PASV':
             self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -144,10 +148,6 @@ class Client():
                 self.data_socket = new_socket
             except Exception as e:
                 return
-        self.recv_msg()
-        if self.code != 150:
-            self.data_socket.close()
-            return
 
         def update_progress_bar(progress):
             progress_bar.setValue(int(progress) * 100 / filesize)
@@ -240,13 +240,15 @@ class Client():
     """
     def list(self, dest_path):
         if self.mode == 'PASV':
-            if not self.pasv():
-                QMessageBox.information(None, 'Error', 'PASV error.', QMessageBox.Yes)
-                return None
+            pass
+            #if not self.pasv():
+            #    QMessageBox.information(None, 'Error', 'PASV error.', QMessageBox.Yes)
+            #   return None
         else:
-            if not self.port():
-                QMessageBox.information(None, 'Error', 'PORT error', QMessageBox.Yes)
-                return None
+            pass
+            #if not self.port():
+            #    QMessageBox.information(None, 'Error', 'PORT error', QMessageBox.Yes)
+            #    return None
         if dest_path:
             self.send_msg('LIST ' + dest_path)
         else:
@@ -266,8 +268,7 @@ class Client():
                 self.data_socket = new_socket
             except:
                 return None
-        self.recv_msg()
-
+        print(self.recv_msg())
         list = ''
         while True:
             data = self.data_socket.recv(4096).decode()
