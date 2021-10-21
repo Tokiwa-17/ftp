@@ -225,45 +225,6 @@
       </item>
      </layout>
     </item>
-    <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="tab_finish">
-       <attribute name="title">
-        <string>Finish</string>
-       </attribute>
-       <widget class="QWidget" name="verticalLayoutWidget">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>831</width>
-          <height>81</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_finish"/>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tab_transfer">
-       <attribute name="title">
-        <string>Transfer </string>
-       </attribute>
-       <widget class="QWidget" name="verticalLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>841</width>
-          <height>81</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_transfer"/>
-       </widget>
-      </widget>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

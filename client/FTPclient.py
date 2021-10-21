@@ -78,8 +78,8 @@ class FTPClient(QMainWindow):
         self.window.cmd_window.progressBar_download.reset()
         self.window.cmd_window.progressBar_download.setFormat("%v")
 
-        l = QLabel('test')
-        self.window.cmd_window.tab_finish.layout.addWidget(l)
+        #l = QLabel('test')
+        #self.window.cmd_window.tab_finish.layout.addWidget(l)
 
 
     def Login(self):
@@ -116,20 +116,6 @@ class FTPClient(QMainWindow):
         self.window.show()
         #self.client.pasv()
         self.show_remote_dir()
-        """
-        TEST
-        """
-        #self.client.cwd('/test')
-        #self.client.rnfr('test.txt')
-        #self.client.rnto('tttt.txt')
-        #self.client.retr('test.txt', 'local_test.txt', 72, 0, self.cmd.cmd_window.download_progressBar)
-        #self.client.stor('local_test.txt', 'test.txt', self.cmd.cmd_window.upload_progressBar, 0)
-        #print(self.client.list(None))
-        #self.display_list()
-        #self.client.pwd()
-        """
-        TEST
-        """
         return True
 
     def pasv_mode(self):
@@ -179,11 +165,12 @@ class FTPClient(QMainWindow):
 
 
     def show_remote_dir(self, dir=None):
+        self.remote_dir = {}
         if self.client.mode == 'PASV':
             self.client.pasv()
         else:
             self.client.port()
-        path = self.window.cmd_window.lineEdit_remote_site.text()
+        path = self.window.cmd_window.lineEdit_remote_site.text().strip()
         self.window.cmd_window.treeWidget_remote_site.clear()
         if path[0:4] == '/tmp':
             path = path[4:]
@@ -196,14 +183,24 @@ class FTPClient(QMainWindow):
         file_list = file_list.split('\n')[:-1]
         for file in file_list:
             file = file.split()
-            if file[4] == '0':
-                item = QTreeWidgetItem([file[5][:2] + '/' + file[6] + ' ' + file[7], 'DIR', '/', file[-1]])
-                self.window.cmd_window.treeWidget_remote_site.addTopLevelItem(item)
-                self.remote_dir[file[-1]] = 0
+            if len(file[5]) == 3:
+                date = file[5][:2] + '/' + file[6] + ' ' + file[7]
             else:
-                item = QTreeWidgetItem([file[5][:2] + '/' + file[6] + ' ' + file[7], 'file', file[4], file[-1]])
+                date = '0' + file[5][:1] + '/' + file[6] + ' ' + file[7]
+            if len(file) == 9:
+                file_name = file[-1]
+            else:
+                file_name = ' '.join(file[8:])
+            try:
+                suffix = file_name.split('.')[1]
+                item = QTreeWidgetItem([date, 'file', file[4], file_name])
                 self.window.cmd_window.treeWidget_remote_site.addTopLevelItem(item)
-                self.remote_dir[file[-1]] = file[4]
+                self.remote_dir[file_name] = int(file[4])
+            except:
+                item = QTreeWidgetItem([date, 'DIR', '/', file_name])
+                self.window.cmd_window.treeWidget_remote_site.addTopLevelItem(item)
+                self.remote_dir[file_name] = 0
+
 
 
     def handle_local_dialog(self):
@@ -214,9 +211,11 @@ class FTPClient(QMainWindow):
                 self.mkdir_local(dir_name)
 
         elif sender == self.window.cmd_window.pushButton_local_upload:
-            filename, ok = QInputDialog.getText(self, '上传文件', '请输入文件名：')
+            src_filename, ok = QInputDialog.getText(self, '上传文件', '请输入源文件名：')
             if ok:
-                self.upload_local(filename)
+                dest_filename, ok = QInputDialog.getText(self, '上传文件', '请输入目标文件名：')
+                if ok:
+                    self.upload_local(src_filename, dest_filename)
 
         elif sender == self.window.cmd_window.pushButton_local_rename:
             filename, ok = QInputDialog.getText(self, '重命名文件', '请输入文件名')
@@ -231,37 +230,59 @@ class FTPClient(QMainWindow):
                 self.rmdir_local(filename)
 
     def mkdir_local(self, dir_name):
-        if os.path.exists(dir_name):
+        path = self.window.cmd_window.lineEdit_local_site.text()
+        if path[-1] == '\\':
+            path = path[:-1]
+        if os.path.exists(path + '\\' + dir_name):
             pass
-        os.makedirs(dir_name)
+        os.makedirs(path + '\\' + dir_name)
         self.show_local_dir()
 
     def rmdir_local(self, filename):
-        if not os.path.exists(filename):
+        path = self.window.cmd_window.lineEdit_local_site.text()
+        if path[-1] == '\\':
+            path = path[:-1]
+        if not os.path.exists(path + '\\' + filename):
             pass
         try:
-            os.remove(filename)
+            os.remove(path + '\\' + filename)
             self.show_local_dir()
         except:
             try:
-                os.removedirs(filename)
+                os.removedirs(path + '\\' + filename)
                 self.show_local_dir()
             except:
                 QMessageBox.information(None, 'Error', 'local Del', QMessageBox.Yes)
                 return
 
-    def upload_local(self, filename):
+    def upload_local(self, src_filename, dest_filename):
         if self.client.mode == 'PASV':
             self.client.pasv()
         if self.client.mode == 'PORT':
             self.client.port()
-        self.client.stor('filename', 'filename', self.window.cmd_window.progressBar_upload, 0)
+        src_path = self.window.cmd_window.lineEdit_local_site.text()
+        if src_path[-1] == '\\':
+            src_path = src_path[:-1]
+        if not os.path.exists(src_path + '\\' + src_filename):
+            return
+        dest_path = self.window.cmd_window.lineEdit_remote_site.text().strip()
+        if dest_path[-1] == '/':
+            dest_path = dest_path[:-1]
+        try:
+            size = self.remote_dir[dest_filename]
+        except:
+            return
+
+        self.client.stor(src_path + '\\' + src_filename, dest_path + '/' + dest_filename, self.window.cmd_window.progressBar_upload, 0)
         self.show_remote_dir()
 
     def rename_local(self, filename, new_name):
-        if not os.path.exists(filename):
-            pass
-        os.rename(filename, new_name)
+        path = self.window.cmd_window.lineEdit_local_site.text()
+        if path[-1] == '\\':
+            path = path[:-1]
+        if not os.path.exists(path + '\\' + filename):
+            return
+        os.rename(path + '\\' + filename, path + '\\' + new_name)
         self.show_local_dir()
 
     def handle_remote_dialog(self):
@@ -289,12 +310,18 @@ class FTPClient(QMainWindow):
                 self.rmdir_remote(filename)
 
     def mkdir_remote(self, dir_name):
-        self.client.mkd(dir_name)
+        path = self.window.cmd_window.lineEdit_remote_site.text()
+        if path[-1] == '/':
+            path = path[:-1]
+        self.client.mkd(path + '/' + dir_name)
         self.show_remote_dir()
         self.remote_dir[dir_name] = 0
 
     def rmdir_remote(self, file_name):
-        self.client.rmd(file_name)
+        path = self.window.cmd_window.lineEdit_remote_site.text()
+        if path[-1] == '/':
+            path = path[:-1]
+        self.client.rmd(path + '/' + file_name)
         self.show_remote_dir()
         try:
             del(self.remote_dir[file_name])
@@ -302,13 +329,16 @@ class FTPClient(QMainWindow):
             pass
 
     def rename_remote(self, filename, new_name):
-        self.client.rnfr(filename)
-        self.client.rnto(new_name)
+        path = self.window.cmd_window.lineEdit_remote_site.text()
+        if path[-1] == '/':
+            path = path[:-1]
+        self.client.rnfr(path + '/' + filename)
+        self.client.rnto(path + '/' + new_name)
         self.show_remote_dir()
         try:
             size = self.remote_dir[filename]
             del(self.remote_dir[filename])
-            selt.remote_dir[new_name] = size
+            self.remote_dir[new_name] = size
         except:
             pass
 
