@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>817</width>
-    <height>597</height>
+    <width>861</width>
+    <height>719</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -68,13 +68,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_connect">
-        <property name="text">
-         <string>Connect</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
@@ -121,58 +114,58 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QPushButton" name="pushButton_11">
+       <widget class="QPushButton" name="pushButton_local_MKDIR">
         <property name="text">
-         <string>PushButton</string>
+         <string>MKDIR</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_10">
+       <widget class="QPushButton" name="pushButton_local_upload">
         <property name="text">
-         <string>PushButton</string>
+         <string>Upload</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_9">
+       <widget class="QPushButton" name="pushButton_local_rename">
         <property name="text">
-         <string>PushButton</string>
+         <string>Rename</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_8">
+       <widget class="QPushButton" name="pushButton_local_del">
         <property name="text">
-         <string>PushButton</string>
+         <string>Del</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_7">
+       <widget class="QPushButton" name="pushButton_remote_MKDIR">
         <property name="text">
-         <string>PushButton</string>
+         <string>MKDIR</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_6">
+       <widget class="QPushButton" name="pushButton_remote_download">
         <property name="text">
-         <string>PushButton</string>
+         <string>Download</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_5">
+       <widget class="QPushButton" name="pushButton_remote_rename">
         <property name="text">
-         <string>PushButton</string>
+         <string>Rename</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_4">
+       <widget class="QPushButton" name="pushButton_remote_del">
         <property name="text">
-         <string>PushButton</string>
+         <string>Del</string>
         </property>
        </widget>
       </item>
@@ -203,20 +196,6 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
-       <widget class="QLabel" name="label_download">
-        <property name="text">
-         <string>download</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QProgressBar" name="progressBar_download">
-        <property name="value">
-         <number>24</number>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QLabel" name="label_upload">
         <property name="text">
          <string>upload</string>
@@ -230,7 +209,60 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QLabel" name="label_download">
+        <property name="text">
+         <string>download</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QProgressBar" name="progressBar_download">
+        <property name="value">
+         <number>24</number>
+        </property>
+       </widget>
+      </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_finish">
+       <attribute name="title">
+        <string>Finish</string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>831</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_finish"/>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_transfer">
+       <attribute name="title">
+        <string>Transfer </string>
+       </attribute>
+       <widget class="QWidget" name="verticalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>841</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_transfer"/>
+       </widget>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -239,7 +271,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>817</width>
+     <width>861</width>
      <height>26</height>
     </rect>
    </property>
