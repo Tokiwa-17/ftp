@@ -46,6 +46,7 @@ class FTPClient(QMainWindow):
         self.login.show()
         self.cmd = Cmd()
         self.window = Window()
+        self.window.setFixedSize(1080, 800)
         self.client.mode = 'PASV'
         #self.cmd.cmd_window.PORT_radioButton.clicked.connect(self.port_mode)
         #self.cmd.cmd_window.PASV_radioButton.clicked.connect(self.pasv_mode)
@@ -112,6 +113,9 @@ class FTPClient(QMainWindow):
         self.window.cmd_window.lineEdit_host.setText('127.0.0.1')
         self.window.cmd_window.lineEdit_user.setText('anonymous')
         self.window.cmd_window.lineEdit_port.setText('21')
+        self.window.cmd_window.lineEdit_host.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.window.cmd_window.lineEdit_user.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.window.cmd_window.lineEdit_port.setFocusPolicy(QtCore.Qt.NoFocus)
         self.window.cmd_window.radioButton_pasv.setChecked(True)
         self.window.show()
         #self.client.pasv()
@@ -293,9 +297,10 @@ class FTPClient(QMainWindow):
                 self.mkdir_remote(dir_name)
 
         elif sender == self.window.cmd_window.pushButton_remote_download:
-            filename, ok = QInputDialog.getText(self, '下载文件', '请输入文件名：')
+            src_filename, ok = QInputDialog.getText(self, '下载文件', '请输入服务器端文件名：')
             if ok:
-                self.download_remote(filename)
+                dest_filename, ok = QInputDialog.getText(self, '下载文件', '请输入客户端文件名：')
+                self.download_remote(src_filename, dest_filename)
 
         elif sender == self.window.cmd_window.pushButton_remote_rename:
             filename, ok = QInputDialog.getText(self, '重命名文件', '请输入文件名')
@@ -342,21 +347,29 @@ class FTPClient(QMainWindow):
         except:
             pass
 
-    def download_remote(self, filename):
+    def download_remote(self, src_filename, dest_filename):
         if self.client.mode == 'PASV':
             print(self.client.pasv())
         if self.client.mode == 'PORT':
             print(self.client.port())
+        src_path = self.window.cmd_window.lineEdit_remote_site.text().strip()
+        if src_path[-1] == '/':
+            src_path = src_path[:-1]
+        dest_path = self.window.cmd_window.lineEdit_local_site.text()
+        if dest_path[-1] == '\\':
+            dest_path = dest_path[:-1]
+        if not os.path.exists(dest_path + '\\' + dest_filename):
+            return
 
         try:
-            size = self.remote_dir[filename]
+            size = self.remote_dir[src_filename]
             if int(size) == 0:
                 return
         except:
             size = 0
             return
-        print(f'size: {size}')
-        self.client.retr(filename, filename, int(size), 0, self.window.cmd_window.progressBar_download)
+        #print(f'size: {size}')
+        self.client.retr(src_path + '/' + src_filename, dest_path + '\\' + dest_filename, int(size), 0, self.window.cmd_window.progressBar_download)
         self.show_local_dir()
 
     def display_list(self, dir=None):
