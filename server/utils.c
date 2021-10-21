@@ -162,11 +162,11 @@ int recv_from_client(int clnt_sock, int idx) {
 int transfer(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int mode = clients[idx].mode;
-    //printf("transfer_MODE: %d\n", mode);
+    printf("transfer_MODE: %d\n", mode);
     if (mode == NO_CONNECTION) {
         send_response(clnt_sock, 425, NULL);
         return 0;
-    } else if (mode == READY) {;
+    } else if (mode == READY_TO_CONNECT) {
         clients[idx].mode = PORT_MODE;
         int tr_sock = clients[idx].transfer_serve_sock;
         struct sockaddr_in addr = clients[idx].addr;
@@ -250,6 +250,7 @@ int safe_send(int fd, char *buf, int len) {
 }
 
 void download(int idx) {
+    //printf("tttttttttttttttttttt\n");
     if(clients[idx].state != TRANSFER)  return;
     int code = 226;
     FILE *f;

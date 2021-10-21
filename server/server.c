@@ -101,7 +101,6 @@ int main(){
                 if (mode == PORT_MODE)  clients[i].mode = READY;
                 if (mode == READY) {
                     // upload：上传到server
-                    printf("MODE:%d\n", mode);
                     printf("rw_state: %d\n", clients[i].rw_state);
                     if (clients[i].rw_state == WRITE) upload(i);
                     if (clients[i].rw_state == READ) {

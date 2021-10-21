@@ -13,6 +13,7 @@
 #define READY 2
 #define LISTENING 3
 #define PORT_MODE 4
+#define READY_TO_CONNECT 5
 
 #define READ 1
 #define WRITE 2

@@ -74,7 +74,7 @@ void PORT(char *param, int idx) {
     char ip[20];
     sprintf(ip, "%d.%d.%d.%d", h1, h2, h3, h4);
     // 更改客户端的状态为准备连接
-    clients[idx].mode = READY;
+    clients[idx].mode = READY_TO_CONNECT;
     int port = p1 * 256 + p2;
     memset(&(clients[idx].addr), 0, sizeof(clients[idx].addr));
     clients[idx].addr.sin_family = AF_INET;
@@ -188,11 +188,13 @@ void STOR(char *param, int idx) {
         send_response(clnt_sock, 504, NULL);
         return ;
     }
-    char absolute_path[100];
+    /*char absolute_path[100];
     get_absolute_path(clients[idx].url_prefix, param, absolute_path);
     int len = strlen(ROOT);
     if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
     else sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path);
+    */
+    strcpy(clients[idx].filename, param);
     FILE *f;
     if ((f = fopen(clients[idx].filename, "ab+")) == NULL) { // appending + binary + reading
         printf("File Open Failed!\n");
@@ -270,13 +272,15 @@ void MKD(char *param, int idx) {
         send_response(clnt_sock, 504, NULL);
         return;
     }
+    //printf("param: %s\n", param);
     char path[200], absolute_path[200];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
-    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    else sprintf(absolute_path, "%s%s", ROOT, path);
-    printf("%s\n", absolute_path);
-    if (mkdir(absolute_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
+    //if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    //else sprintf(absolute_path, "%s%s", ROOT, path);
+    //printf("%s\n", absolute_path);
+    //printf("%s\n", path);
+    if (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
         send_response(clnt_sock, 250, path);
     else send_response(clnt_sock, 550, NULL);
 }
@@ -340,12 +344,20 @@ void LIST_(char *param, int idx) {
             if (path[0] == '/') sprintf(clients[idx].filename, "%s%s", ROOT, path);
             else sprintf(clients[idx].filename, "%s/%s", ROOT, path);
         }
-        printf("ROOT: %s\n", ROOT);
-        printf("param: %s\n", param);
-        printf("filename: %s\n", clients[idx].filename);
+        //printf("ROOT: %s\n", ROOT);
+        //printf("param: %s\n", param);
+        //printf("filename: %s\n", clients[idx].filename);
         if (!check_file(clients[idx].filename) && !check_folder(clients[idx].filename)) {
-            send_response(clnt_sock, 451, NULL);
-            return;
+            //send_response(clnt_sock, 451, NULL);
+            //return;
+            if(!check_file(param) && !check_folder(param)) {
+                send_response(clnt_sock, 451, NULL);
+                return;
+            } else {
+                strcpy(clients[idx].filename, param);
+                if (!transfer(clients[idx].filename, idx)) return;
+                clients[idx].rw_state = LIST;
+            }
         } else {
             if(!transfer(clients[idx].filename, idx)) return;
             clients[idx].rw_state = LIST;
@@ -364,12 +376,12 @@ void RMD(char *param, int idx) {
         return;
     }
     char path[200], absolute_path[200];
-    get_absolute_path(clients[idx].url_prefix, param, path);
-    int len = strlen(ROOT);
-    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    else sprintf(absolute_path, "%s%s", ROOT, path);
+    //get_absolute_path(clients[idx].url_prefix, param, path);
+    //int len = strlen(ROOT);
+    //if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    //else sprintf(absolute_path, "%s%s", ROOT, path);
     //printf("ABSPATH: %s\n", absolute_path);
-    if (del_dir(absolute_path)) send_response(clnt_sock, 250, NULL);
+    if (del_dir(param)) send_response(clnt_sock, 250, NULL);
     else send_response(clnt_sock, 550, NULL);
 }
 
@@ -379,7 +391,7 @@ void RNFR(char *param, int idx) { // 重命名开始
         send_response(clnt_sock, 504, NULL);
         return;
     }
-    char path[200], absolute_path[200];
+    /*char path[200], absolute_path[200];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
     if(ROOT[len - 1] == '/') {
@@ -391,11 +403,11 @@ void RNFR(char *param, int idx) { // 重命名开始
         if(path[0] == '/')
             sprintf(absolute_path, "%s%s", ROOT, path);
         else sprintf(absolute_path, "%s/%s", ROOT, path);
-    }
+    }*/
     //printf("ABS_PATH: %s\n", absolute_path);
-    if(check_file(absolute_path)) {
+    if(check_file(param)) {
         clients[idx].state = RNFR_CMP;
-        strcpy(clients[idx].rename_file, absolute_path);
+        strcpy(clients[idx].rename_file, param);
         send_response(clnt_sock, 350, NULL);
     } 
     else send_response(clnt_sock, 550, NULL);
@@ -412,7 +424,7 @@ void RNTO(char *param, int idx) { // 重命名结束
         send_response(clnt_sock, 504, NULL);
         return;
     }
-    char path[200], absolute_path[200], cmd[400];
+    /*char path[200], absolute_path[200], cmd[400];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
     if(ROOT[len - 1] == '/') {
@@ -424,8 +436,9 @@ void RNTO(char *param, int idx) { // 重命名结束
         if(path[0] == '/')
             sprintf(absolute_path, "%s%s", ROOT, path);
         else sprintf(absolute_path, "%s/%s", ROOT, path);
-    }
-    sprintf(cmd, "mv %s %s", clients[idx].rename_file, absolute_path);
+    }*/
+    char cmd[400];
+    sprintf(cmd, "mv %s %s", clients[idx].rename_file, param);
     // mv src dest
     if(system(cmd) == -1) {
         send_response(clnt_sock, 550, NULL);
