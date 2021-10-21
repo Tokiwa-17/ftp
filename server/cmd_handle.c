@@ -149,7 +149,7 @@ void RETR(char *param, int idx) {
         send_response(clnt_sock, 504, NULL);
         return ;
     }
-    char absolute_path[100];
+    /*char absolute_path[100];
     get_absolute_path(clients[idx].url_prefix, param, absolute_path);
     // absolute_path = clients[idx].url_prefix + param
     int len = strlen(ROOT);
@@ -162,7 +162,8 @@ void RETR(char *param, int idx) {
         if (absolute_path[0] != '/')
             sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path);
         else sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path);
-    }
+    }*/
+    strcpy(clients[idx].filename, param);
     printf("%s\n", clients[idx].filename);
     FILE *f;
     //printf("PATH: %s\n", clients[idx].filename);
