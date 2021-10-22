@@ -115,7 +115,7 @@ class FTPClient(QMainWindow):
         self.window.cmd_window.lineEdit_port.setText('21')
         self.window.cmd_window.lineEdit_host.setFocusPolicy(QtCore.Qt.NoFocus)
         self.window.cmd_window.lineEdit_user.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.window.cmd_window.lineEdit_port.setFocusPolicy(QtCore.Qt.NoFocus)
+        #self.window.cmd_window.lineEdit_port.setFocusPolicy(QtCore.Qt.NoFocus)
         self.window.cmd_window.radioButton_pasv.setChecked(True)
         self.window.show()
         #self.client.pasv()
@@ -272,12 +272,16 @@ class FTPClient(QMainWindow):
         dest_path = self.window.cmd_window.lineEdit_remote_site.text().strip()
         if dest_path[-1] == '/':
             dest_path = dest_path[:-1]
+        if dest_path[0:4] == '/tmp':
+            dest_path = dest_path[4:]
+        if dest_path and dest_path[-1] != '/':
+            dest_path += '/'
         try:
             size = self.remote_dir[dest_filename]
         except:
             return
 
-        self.client.stor(src_path + '\\' + src_filename, dest_path + '/' + dest_filename, self.window.cmd_window.progressBar_upload, 0)
+        self.client.stor(src_path + '\\' + src_filename, dest_path + dest_filename, self.window.cmd_window.progressBar_upload, 0)
         self.show_remote_dir()
 
     def rename_local(self, filename, new_name):
@@ -318,7 +322,11 @@ class FTPClient(QMainWindow):
         path = self.window.cmd_window.lineEdit_remote_site.text()
         if path[-1] == '/':
             path = path[:-1]
-        self.client.mkd(path + '/' + dir_name)
+        if path[0:4] == '/tmp':
+            path = path[4:]
+        if path and path[-1] != '/':
+            path += '/'
+        self.client.mkd(path + dir_name)
         self.show_remote_dir()
         self.remote_dir[dir_name] = 0
 
@@ -326,7 +334,11 @@ class FTPClient(QMainWindow):
         path = self.window.cmd_window.lineEdit_remote_site.text()
         if path[-1] == '/':
             path = path[:-1]
-        self.client.rmd(path + '/' + file_name)
+        if path[0:4] == '/tmp':
+            path = path[4:]
+        if path and path[-1] != '/':
+            path += '/'
+        self.client.rmd(path + file_name)
         self.show_remote_dir()
         try:
             del(self.remote_dir[file_name])
@@ -337,8 +349,12 @@ class FTPClient(QMainWindow):
         path = self.window.cmd_window.lineEdit_remote_site.text()
         if path[-1] == '/':
             path = path[:-1]
-        self.client.rnfr(path + '/' + filename)
-        self.client.rnto(path + '/' + new_name)
+        if path[0:4] == '/tmp':
+            path = path[4:]
+        if path and path[-1] != '/':
+            path += '/'
+        self.client.rnfr(path + filename)
+        self.client.rnto(path + new_name)
         self.show_remote_dir()
         try:
             size = self.remote_dir[filename]
@@ -355,6 +371,10 @@ class FTPClient(QMainWindow):
         src_path = self.window.cmd_window.lineEdit_remote_site.text().strip()
         if src_path[-1] == '/':
             src_path = src_path[:-1]
+        if src_path[0:4] == '/tmp':
+            src_path = src_path[4:]
+        if src_path and src_path[-1] != '/':
+            src_path += '/'
         dest_path = self.window.cmd_window.lineEdit_local_site.text()
         if dest_path[-1] == '\\':
             dest_path = dest_path[:-1]
@@ -369,7 +389,7 @@ class FTPClient(QMainWindow):
             size = 0
             return
         #print(f'size: {size}')
-        self.client.retr(src_path + '/' + src_filename, dest_path + '\\' + dest_filename, int(size), 0, self.window.cmd_window.progressBar_download)
+        self.client.retr(src_path + src_filename, dest_path + '\\' + dest_filename, int(size), 0, self.window.cmd_window.progressBar_download)
         self.show_local_dir()
 
     def display_list(self, dir=None):
