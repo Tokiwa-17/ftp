@@ -91,15 +91,12 @@ int get_local_IPaddr() {
     ifc.ifc_len = 1024;
     ifc.ifc_buf = buf;
     if((sockfd = socket(AF_INET, SOCK_DGRAM,0))<0) {
-	    //printf("socket error\n");
 		return 0;
 	}
     ioctl(sockfd, SIOCGIFCONF, &ifc);
     ifr = (struct ifreq*) buf;
     for(i=(ifc.ifc_len/sizeof(struct ifreq)); i > 0; i--) {
-		//printf("net name: %s\n",ifr->ifr_name);
 		inet_ntop(AF_INET,&((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr, LOCAL_IP,20);
-		//printf("ip: %s \n",LOCAL_IP);
 		ifr = ifr +1;
 	}
 	return 1;

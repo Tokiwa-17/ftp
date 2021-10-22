@@ -19,7 +19,6 @@ int main(int argc, char **argv){
     srand((unsigned)time(NULL));
     if(!get_local_IPaddr(&LOCAL_IP)) return 0;
     strcpy(ROOT, "/tmp");
-    //printf("%s\n", LOCAL_IP);
     listen_port = 21;
 
     int opt;
@@ -40,7 +39,6 @@ int main(int argc, char **argv){
         case 'r':
             if (access(optarg, 0) == -1)
             {
-                //printf("Directory doesn't exist: %s.\n", optarg);
                 return 0;
             }
             strcpy(ROOT, optarg);
@@ -48,7 +46,6 @@ int main(int argc, char **argv){
         case 'p':
             if (sscanf(optarg, "%d%c", &listen_port, &check_c) != 1)
             {
-                //printf("Port number invalid: %s.\n", optarg);
                 return 0;
             }
             if (listen_port < 1 || listen_port > 65535)
@@ -57,7 +54,6 @@ int main(int argc, char **argv){
             }
             break;
         case '?':
-            //printf("Wrong argument.\n");
             return 0;
         }
     }
@@ -73,14 +69,11 @@ int main(int argc, char **argv){
         ready_idx = select(max_serve_sock + 1, &fd_read_set, &fd_write_set, NULL, NULL);
         //https://blog.csdn.net/u014530704/article/details/72833186
         //select()调用返回处于就绪状态并且已经包含在fd_set结构中的描述字总数
-        //printf("ready_idx: %d\n", ready_idx);
         if (ready_idx == -1) {
-            //printf("ready_idx == -1\n");
             if (errno == EINTR) continue;
             else break;
         }
         if (FD_ISSET(serve_sock, &fd_read_set)) {
-            //printf("fd_read_set\n");
             int clnt_sock = accept(serve_sock, NULL, NULL);
             if (clnt_sock == -1) ;
             else {
@@ -96,7 +89,6 @@ int main(int argc, char **argv){
             int clnt_sock_tmp = clients[i].connect_serve_sock;
             if (clnt_sock_tmp == -1) continue;
             if (FD_ISSET(clnt_sock_tmp, &fd_read_set)) {
-                //printf("fd_read_set\n");
                 if (recv_from_client(clnt_sock_tmp, i) == 0) {
                    // TODO:关闭连接
                    // 关闭控制
@@ -111,7 +103,6 @@ int main(int argc, char **argv){
                     continue;
                 }
                 int mode = clients[i].mode;
-                //printf("tMODE: %d\n", mode);
                 if (mode == PASV_MODE) {
                     int trans_sock = accept(clnt_sock_tmp, NULL, NULL);
                     if (trans_sock == -1) {
@@ -146,12 +137,10 @@ int main(int argc, char **argv){
                 if (mode == PORT_MODE)  clients[i].mode = READY;
                 if (mode == READY) {
                     // upload：上传到server
-                    //printf("rw_state: %d\n", clients[i].rw_state);
                     if (clients[i].rw_state == WRITE) upload(i);
                     if (clients[i].rw_state == READ) {
                         char sentence[8];
                         int len = recv(clnt_sock_tmp, sentence, 8, MSG_DONTWAIT);
-                        //printf("len: %d\n", len);
                         if (len <= 0)
                         {
                             close_transfer_fd(i);
@@ -163,7 +152,6 @@ int main(int argc, char **argv){
                 if (--ready_idx <= 0) continue;
             }
              else if(FD_ISSET(clnt_sock_tmp, &fd_write_set)) {
-                //printf("fd_write_set\n");
                 int mode = clients[i].mode;
                 if (mode == READY) {
                     if(clients[i].rw_state == READ) download(i);
