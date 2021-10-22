@@ -44,7 +44,7 @@ void PASS(char *param, int idx) {
 }
 
 void PORT(char *param, int idx) {
-    printf("Param :%s\n", param);
+    //printf("Param :%s\n", param);
     int clnt_sock = clients[idx].connect_serve_sock;
     int state = clients[idx].state;
     int tr_sock = clients[idx].transfer_serve_sock;
@@ -149,7 +149,7 @@ void RETR(char *param, int idx) {
         send_response(clnt_sock, 504, NULL);
         return ;
     }
-    /*char absolute_path[100];
+    char absolute_path[100];
     get_absolute_path(clients[idx].url_prefix, param, absolute_path);
     // absolute_path = clients[idx].url_prefix + param
     int len = strlen(ROOT);
@@ -162,13 +162,13 @@ void RETR(char *param, int idx) {
         if (absolute_path[0] != '/')
             sprintf(clients[idx].filename, "%s/%s", ROOT, absolute_path);
         else sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path);
-    }*/
-    strcpy(clients[idx].filename, param);
-    printf("%s\n", clients[idx].filename);
+    }
+    //strcpy(clients[idx].filename, param);
+    //printf("%s\n", clients[idx].filename);
     FILE *f;
     //printf("PATH: %s\n", clients[idx].filename);
     if ((f = fopen(clients[idx].filename, "rb+")) == NULL){
-        printf("File Open Failed!\n");
+        //printf("File Open Failed!\n");
         send_response(clnt_sock, 550, NULL);
         return;
     }
@@ -189,13 +189,13 @@ void STOR(char *param, int idx) {
         send_response(clnt_sock, 504, NULL);
         return ;
     }
-    /*char absolute_path[100];
+    char absolute_path[100];
     get_absolute_path(clients[idx].url_prefix, param, absolute_path);
     int len = strlen(ROOT);
     if (ROOT[len - 1] == '/')   sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path + 1);
     else sprintf(clients[idx].filename, "%s%s", ROOT, absolute_path);
-    */
-    strcpy(clients[idx].filename, param);
+    printf("filename: %s\n", clients[idx].filename);
+    //strcpy(clients[idx].filename, param);
     FILE *f;
     if ((f = fopen(clients[idx].filename, "ab+")) == NULL) { // appending + binary + reading
         printf("File Open Failed!\n");
@@ -277,11 +277,11 @@ void MKD(char *param, int idx) {
     char path[200], absolute_path[200];
     get_absolute_path(clients[idx].url_prefix, param, path);
     int len = strlen(ROOT);
-    //if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
-    //else sprintf(absolute_path, "%s%s", ROOT, path);
-    //printf("%s\n", absolute_path);
+    if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
+    else sprintf(absolute_path, "%s%s", ROOT, path);
+    printf("%s\n", absolute_path);
     //printf("%s\n", path);
-    if (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
+    if (mkdir(absolute_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0) 
         send_response(clnt_sock, 250, path);
     else send_response(clnt_sock, 550, NULL);
 }
@@ -295,7 +295,7 @@ void CWD(char *param, int idx) {
     char path[200], absolute_path[200];
     get_absolute_path(clients[idx].url_prefix, param, path);
     // url_prefix/param -> path
-    printf("%s\n", path);
+    //printf("%s\n", path);
     int len = strlen(ROOT);
     if(ROOT[len - 1] == '/')   {
         if(path[0]=='/')
@@ -308,7 +308,7 @@ void CWD(char *param, int idx) {
         else sprintf(absolute_path, "%s/%s", ROOT, path);
     }
     // ROOT/path -> absolute_path
-    printf("absolute_path: %s\n", absolute_path);
+    //printf("absolute_path: %s\n", absolute_path);
     if (check_folder(absolute_path)) {
         strcpy(clients[idx].url_prefix, path);
         // clients[idx].url_prefix记录没有ROOT的绝对路径
@@ -326,7 +326,7 @@ void PWD(char *param, int idx) {
     }
     char resp_msg[200];
     sprintf(resp_msg, "\"%s\"", clients[idx].url_prefix);
-    printf("pwd: %s\n", resp_msg);
+    //printf("pwd: %s\n", resp_msg);
     send_response(clnt_sock, 257, resp_msg);
 }
 

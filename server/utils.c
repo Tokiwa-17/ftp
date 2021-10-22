@@ -40,7 +40,7 @@ void send_test(int serve_sock, char * buf) {
     serv_addr.sin_port = htons(1234); 
     bind(serve_sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     listen(serve_sock, 10);
-    printf("Wait for Connection..................\n");
+    //printf("Wait for Connection..................\n");
     struct sockaddr_in clnt_addr;
     socklen_t clnt_addr_size = sizeof(clnt_addr);
     int clnt_sock = accept(serve_sock, (struct sockaddr*)&clnt_addr, &clnt_addr_size);
@@ -162,7 +162,7 @@ int recv_from_client(int clnt_sock, int idx) {
 int transfer(char *param, int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
     int mode = clients[idx].mode;
-    printf("transfer_MODE: %d\n", mode);
+    //printf("transfer_MODE: %d\n", mode);
     if (mode == NO_CONNECTION) {
         send_response(clnt_sock, 425, NULL);
         return 0;
@@ -206,7 +206,7 @@ void upload(int idx) {
     if (clients[idx].offset == 0) f = fopen(filename, "wb");
     else f = fopen(filename, "rb+");
     if (f == NULL) {
-        printf("file open failed.\n");
+        //printf("file open failed.\n");
         code = 550;
     }
     else {
@@ -262,7 +262,7 @@ void download(int idx) {
     else {
         fseek(f, clients[idx].offset, SEEK_SET);
         if ((nbytes = fread(buf, 1, BUFSIZE, f)) > 0) {
-            printf("nbytes: %d\n", nbytes);
+            //printf("nbytes: %d\n", nbytes);
             if (!safe_send(clients[idx].transfer_serve_sock, buf, nbytes)){
                 code = 426;
             }

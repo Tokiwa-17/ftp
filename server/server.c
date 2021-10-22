@@ -10,19 +10,62 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <getopt.h>
+#include <errno.h>
 
 extern int listen_port;
 
-int main(){
+int main(int argc, char **argv){
     srand((unsigned)time(NULL));
     if(!get_local_IPaddr(&LOCAL_IP)) return 0;
     strcpy(ROOT, "/tmp");
     //printf("%s\n", LOCAL_IP);
     listen_port = 21;
+
+    int opt;
+    char check_c;
+    const struct option arg_options[] = 
+    {
+        {"port", required_argument, NULL, 'p'},
+
+        {"root", required_argument, NULL, 'r'},
+
+        {NULL, 0, NULL, 0},
+    };
+
+    while ((opt = getopt_long_only(argc, (char *const *)argv, "p:r:", arg_options, NULL)) != -1)
+    {
+        switch (opt)
+        {
+        case 'r':
+            if (access(optarg, 0) == -1)
+            {
+                //printf("Directory doesn't exist: %s.\n", optarg);
+                return 0;
+            }
+            strcpy(ROOT, optarg);
+            break;
+        case 'p':
+            if (sscanf(optarg, "%d%c", &listen_port, &check_c) != 1)
+            {
+                //printf("Port number invalid: %s.\n", optarg);
+                return 0;
+            }
+            if (listen_port < 1 || listen_port > 65535)
+            {
+                return 0;
+            }
+            break;
+        case '?':
+            //printf("Wrong argument.\n");
+            return 0;
+        }
+    }
+
     int serve_sock = generate_sock(listen_port);
     if(serve_sock == -1) return 0;
     sock_init(serve_sock);
-    int ready_idx = -1;
+    int ready_idx;
     fd_set fd_read_set, fd_write_set;
     while(1) {
         fd_read_set = handle_set;
@@ -33,20 +76,21 @@ int main(){
         //printf("ready_idx: %d\n", ready_idx);
         if (ready_idx == -1) {
             //printf("ready_idx == -1\n");
-            break;
+            if (errno == EINTR) continue;
+            else break;
         }
         if (FD_ISSET(serve_sock, &fd_read_set)) {
             //printf("fd_read_set\n");
             int clnt_sock = accept(serve_sock, NULL, NULL);
-            if (clnt_sock == -1) {
-                return 0;
-            } else {
+            if (clnt_sock == -1) ;
+            else {
                 if (!manage_fds(clnt_sock))
                     close_fd(clnt_sock);
             }
             char init_msg[40];
             strcpy(init_msg, "Anonymous FTP server ready.");
             send_response(clnt_sock, 220, init_msg);
+            if (--ready_idx <= 0) continue;
         }
         for(int i = 0; i <= max_idx; i++) {
             int clnt_sock_tmp = clients[i].connect_serve_sock;
@@ -60,6 +104,7 @@ int main(){
                    clients[i].transfer_serve_sock = -1;
                    return 0;
                 }
+                if (--ready_idx <= 0) continue;
                 clnt_sock_tmp = clients[i].transfer_serve_sock;
                 if(clnt_sock_tmp == -1) {
                     // 接收到 PORT 和 PASV命令后会修改 transfer_serve_sock
@@ -101,12 +146,12 @@ int main(){
                 if (mode == PORT_MODE)  clients[i].mode = READY;
                 if (mode == READY) {
                     // upload：上传到server
-                    printf("rw_state: %d\n", clients[i].rw_state);
+                    //printf("rw_state: %d\n", clients[i].rw_state);
                     if (clients[i].rw_state == WRITE) upload(i);
                     if (clients[i].rw_state == READ) {
                         char sentence[8];
                         int len = recv(clnt_sock_tmp, sentence, 8, MSG_DONTWAIT);
-                        printf("len: %d\n", len);
+                        //printf("len: %d\n", len);
                         if (len <= 0)
                         {
                             close_transfer_fd(i);
@@ -115,6 +160,7 @@ int main(){
                         }
                     }
                 }
+                if (--ready_idx <= 0) continue;
             }
              else if(FD_ISSET(clnt_sock_tmp, &fd_write_set)) {
                 //printf("fd_write_set\n");
@@ -124,6 +170,7 @@ int main(){
                     else if(clients[i].rw_state == WRITE) upload(i);
                     else if(clients[i].rw_state == LIST) resp_list(i, clients[i].filename);
                 }
+                if (--ready_idx <= 0) continue;
             }
         }
     }

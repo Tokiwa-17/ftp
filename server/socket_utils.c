@@ -31,6 +31,7 @@ int generate_sock(int port) {
 
 void sock_init(int sock) {
     max_serve_sock = sock;
+    max_idx = -1;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         clients[i].connect_serve_sock = -1;
         clients[i].transfer_serve_sock = -1;
@@ -62,7 +63,7 @@ int manage_fds(int cur_fd) {
 
 void close_fd(int idx) {
     int clnt_sock = clients[idx].connect_serve_sock;
-    if(clnt_sock == -1) {
+    if(clnt_sock != -1) {
         close(clnt_sock);
         clients[idx].connect_serve_sock = -1;
         clients[idx].state = NOT_LOG_IN;
@@ -90,7 +91,7 @@ int get_local_IPaddr() {
     ifc.ifc_len = 1024;
     ifc.ifc_buf = buf;
     if((sockfd = socket(AF_INET, SOCK_DGRAM,0))<0) {
-	    printf("socket error\n");
+	    //printf("socket error\n");
 		return 0;
 	}
     ioctl(sockfd, SIOCGIFCONF, &ifc);
