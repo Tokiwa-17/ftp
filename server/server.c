@@ -23,8 +23,7 @@ int main(int argc, char **argv){
 
     int opt;
     char check_c;
-    const struct option arg_options[] = 
-    {
+    const struct option arg_options[] = {
         {"port", required_argument, NULL, 'p'},
 
         {"root", required_argument, NULL, 'r'},
@@ -32,26 +31,15 @@ int main(int argc, char **argv){
         {NULL, 0, NULL, 0},
     };
 
-    while ((opt = getopt_long_only(argc, (char *const *)argv, "p:r:", arg_options, NULL)) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt_long_only(argc, (char *const *)argv, "p:r:", arg_options, NULL)) != -1) {
+        switch (opt) {
         case 'r':
-            if (access(optarg, 0) == -1)
-            {
-                return 0;
-            }
+            if (access(optarg, 0) == -1)    return 0;
             strcpy(ROOT, optarg);
             break;
         case 'p':
-            if (sscanf(optarg, "%d%c", &listen_port, &check_c) != 1)
-            {
-                return 0;
-            }
-            if (listen_port < 1 || listen_port > 65535)
-            {
-                return 0;
-            }
+            if (sscanf(optarg, "%d%c", &listen_port, &check_c) != 1)    return 0;
+            if (listen_port < 1 || listen_port > 65535)     return 0;
             break;
         case '?':
             return 0;

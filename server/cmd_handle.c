@@ -166,7 +166,6 @@ void RETR(char *param, int idx) {
         return;
     }
     else fclose(f);
-    // TODO 更新客户端的状态
     if (!transfer(param, idx)) return;
     clients[idx].transfers_num += 1;
     clients[idx].rw_state = READ;
@@ -294,6 +293,7 @@ void CWD(char *param, int idx) {
             sprintf(absolute_path, "%s%s", ROOT, path);
         else sprintf(absolute_path, "%s/%s", ROOT, path);
     }
+    //printf("absolute_path: %s\n", absolute_path);
     // ROOT/path -> absolute_path
     if (check_folder(absolute_path)) {
         strcpy(clients[idx].url_prefix, path);
@@ -311,7 +311,7 @@ void PWD(char *param, int idx) {
         return;
     }
     char resp_msg[200];
-    sprintf(resp_msg, "\"%s\"", clients[idx].url_prefix);
+    sprintf(resp_msg, "\"%s%s\"", ROOT, clients[idx].url_prefix);
     send_response(clnt_sock, 257, resp_msg);
 }
 
@@ -363,6 +363,7 @@ void RMD(char *param, int idx) {
     int len = strlen(ROOT);
     if(ROOT[len - 1] == '/')   sprintf(absolute_path, "%s%s", ROOT, path + 1);
     else sprintf(absolute_path, "%s%s", ROOT, path);
+    //printf("absolute_path: %s\n", absolute_path);
     if (del_dir(absolute_path)) send_response(clnt_sock, 250, NULL);
     else send_response(clnt_sock, 550, NULL);
 }
